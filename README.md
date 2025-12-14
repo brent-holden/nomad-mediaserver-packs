@@ -51,8 +51,11 @@ nomad-pack run plex --registry=media -f my-plex-vars.hcl
 ### Deploy Jellyfin
 
 ```bash
-# With backup and update jobs (defaults)
+# With GPU transcoding, backup, and update jobs (defaults)
 nomad-pack run jellyfin --registry=media
+
+# Without GPU transcoding
+nomad-pack run jellyfin --registry=media -var gpu_transcoding=false
 
 # Without backup job
 nomad-pack run jellyfin --registry=media -var enable_backup=false
@@ -120,7 +123,10 @@ Before deploying packs, you must configure the required volumes. See the `exampl
 
 These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is recommended for NAS-based media libraries.
 
-1. **Install a CSI plugin** - See [nomad-media-csi-cifs](https://github.com/brent-holden/nomad-media-csi-cifs) for a complete CSI setup with Ansible.
+1. **Install a CSI plugin** - See [nomad-media-csi-cifs](https://github.com/brent-holden/nomad-media-csi-cifs) for complete CSI setup including:
+   - CSI controller and node plugin job specifications
+   - Ansible playbooks for automated deployment
+   - Volume registration templates
 
 2. **Register CSI volumes:**
    ```bash
@@ -170,6 +176,8 @@ sudo systemctl restart nomad
 2. (Optional) For GPU transcoding, ensure `/dev/dri` exists on the host.
 
 ### Jellyfin
+
+1. (Optional) For GPU transcoding (enabled by default), ensure `/dev/dri` exists on the host.
 
 No additional setup required. Jellyfin will initialize on first run.
 
