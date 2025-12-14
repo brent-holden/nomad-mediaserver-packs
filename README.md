@@ -140,7 +140,7 @@ nomad-pack run plex --registry=media \
 | Media | `media-drive` | Shared media library (NAS mount) | Yes |
 | Backup | `backup-drive` | Backup storage location | Only if `enable_backup=true` |
 
-## Quick Start
+## Install
 
 ### Add the Registry
 
