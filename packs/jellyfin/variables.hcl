@@ -176,13 +176,13 @@ variable "csi_volume_password" {
 }
 
 variable "media_volume_source" {
-  description = "The CIFS/SMB source path for media volume (e.g., //192.168.1.100/media)"
+  description = "The CIFS/SMB source path for media volume"
   type        = string
-  default     = ""
+  default     = "//10.100.0.1/media"
 }
 
 variable "backup_volume_source" {
-  description = "The CIFS/SMB source path for backup volume (e.g., //192.168.1.100/backups)"
+  description = "The CIFS/SMB source path for backup volume"
   type        = string
-  default     = ""
+  default     = "//10.100.0.1/backups"
 }
