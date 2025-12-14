@@ -123,7 +123,7 @@ Before deploying packs, you must configure the required volumes. See the `exampl
 
 These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is recommended for NAS-based media libraries.
 
-1. **Install a CSI plugin** - See [nomad-media-csi-cifs](https://github.com/brent-holden/nomad-media-csi-cifs) for complete CSI setup including:
+1. **Install a CSI plugin** - See [nomad-media-infra](https://github.com/brent-holden/nomad-media-infra) for complete CSI setup including:
    - CSI controller and node plugin job specifications
    - Ansible playbooks for automated deployment
    - Volume registration templates
