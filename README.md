@@ -29,42 +29,40 @@ Each pack includes:
 nomad-pack registry add media https://github.com/brent-holden/nomad-media-packs
 ```
 
-### Deploy Plex
+### Deploy
 
 ```bash
-# With GPU transcoding, backup, and update jobs (defaults)
 nomad-pack run plex --registry=media
-
-# Without GPU transcoding
-nomad-pack run plex --registry=media -var gpu_transcoding=false
-
-# Without backup job
-nomad-pack run plex --registry=media -var enable_backup=false
-
-# Without update job
-nomad-pack run plex --registry=media -var enable_update=false
-
-# With custom variables file
-nomad-pack run plex --registry=media -f my-plex-vars.hcl
 ```
-
-### Deploy Jellyfin
 
 ```bash
-# With GPU transcoding, backup, and update jobs (defaults)
 nomad-pack run jellyfin --registry=media
-
-# Without GPU transcoding
-nomad-pack run jellyfin --registry=media -var gpu_transcoding=false
-
-# Without backup job
-nomad-pack run jellyfin --registry=media -var enable_backup=false
-
-# Service only (no backup or update)
-nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
 ```
+
+By default, packs deploy with GPU transcoding, backup jobs, and update jobs enabled.
 
 ## Configuration
+
+### Optional Flags
+
+Disable features using `-var` flags:
+
+```bash
+# Disable GPU transcoding
+nomad-pack run plex --registry=media -var gpu_transcoding=false
+
+# Disable backup job
+nomad-pack run plex --registry=media -var enable_backup=false
+
+# Disable update job
+nomad-pack run plex --registry=media -var enable_update=false
+
+# Disable multiple features
+nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
+
+# Use a custom variables file
+nomad-pack run plex --registry=media -f my-plex-vars.hcl
+```
 
 Each pack has configurable variables. View available variables:
 
