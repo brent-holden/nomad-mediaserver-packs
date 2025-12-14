@@ -107,7 +107,7 @@ These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is reco
 Set `deploy_csi_volumes=true` when running the pack:
 
 ```bash
-nomad-pack run plex --registry=media \
+nomad-pack run plex --registry=mediaserver \
   -var deploy_csi_volumes=true \
   -var csi_volume_password=your-password
 ```
@@ -145,19 +145,19 @@ nomad-pack run plex --registry=media \
 ### Add the Registry
 
 ```bash
-nomad-pack registry add media https://github.com/brent-holden/nomad-mediaserver-packs
+nomad-pack registry add mediaserver https://github.com/brent-holden/nomad-mediaserver-packs
 ```
 
 ### Deploy
 
 ```bash
-nomad-pack run plex --registry=media
+nomad-pack run plex --registry=mediaserver
 ```
 
 or
 
 ```bash
-nomad-pack run jellyfin --registry=media
+nomad-pack run jellyfin --registry=mediaserver
 ```
 
 By default, packs deploy with GPU transcoding, backup jobs, and update jobs enabled.
@@ -170,31 +170,31 @@ Disable features using `-var` flags:
 
 ```bash
 # Disable GPU transcoding
-nomad-pack run plex --registry=media -var gpu_transcoding=false
+nomad-pack run plex --registry=mediaserver -var gpu_transcoding=false
 
 # Disable backup job
-nomad-pack run plex --registry=media -var enable_backup=false
+nomad-pack run plex --registry=mediaserver -var enable_backup=false
 
 # Disable update job
-nomad-pack run plex --registry=media -var enable_update=false
+nomad-pack run plex --registry=mediaserver -var enable_update=false
 
 # Disable multiple features
-nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
+nomad-pack run jellyfin --registry=mediaserver -var enable_backup=false -var enable_update=false
 
 # Use a custom variables file
-nomad-pack run plex --registry=media -f my-plex-vars.hcl
+nomad-pack run plex --registry=mediaserver -f my-plex-vars.hcl
 ```
 
 Each pack has configurable variables. View available variables:
 
 ```bash
-nomad-pack info plex --registry=media
+nomad-pack info plex --registry=mediaserver
 ```
 
 Generate a variables file:
 
 ```bash
-nomad-pack generate var-file plex --registry=media > plex-vars.hcl
+nomad-pack generate var-file plex --registry=mediaserver > plex-vars.hcl
 ```
 
 ### Common Variables
@@ -252,7 +252,7 @@ Optionally deploy CSI volumes as part of the pack (disabled by default):
 Example deploying with CSI volumes:
 
 ```bash
-nomad-pack run plex --registry=media \
+nomad-pack run plex --registry=mediaserver \
   -var deploy_csi_volumes=true \
   -var csi_volume_password=secret
 ```
@@ -278,8 +278,8 @@ No additional setup required. Jellyfin will initialize on first run.
 ## Destroying Deployments
 
 ```bash
-nomad-pack destroy plex --registry=media
-nomad-pack destroy jellyfin --registry=media
+nomad-pack destroy plex --registry=mediaserver
+nomad-pack destroy jellyfin --registry=mediaserver
 ```
 
 ## License

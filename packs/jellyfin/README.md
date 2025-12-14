@@ -18,19 +18,19 @@ This pack deploys [Jellyfin](https://jellyfin.org/) to Nomad, with optional back
 
 ```bash
 # Deploy with defaults (backup enabled, update enabled)
-nomad-pack run jellyfin --registry=media
+nomad-pack run jellyfin --registry=mediaserver
 
 # Deploy without GPU transcoding
-nomad-pack run jellyfin --registry=media -var gpu_transcoding=false
+nomad-pack run jellyfin --registry=mediaserver -var gpu_transcoding=false
 
 # Deploy without backup job
-nomad-pack run jellyfin --registry=media -var enable_backup=false
+nomad-pack run jellyfin --registry=mediaserver -var enable_backup=false
 
 # Deploy without update job
-nomad-pack run jellyfin --registry=media -var enable_update=false
+nomad-pack run jellyfin --registry=mediaserver -var enable_update=false
 
 # Deploy with custom resources
-nomad-pack run jellyfin --registry=media -var cpu=8000 -var memory=8192
+nomad-pack run jellyfin --registry=mediaserver -var cpu=8000 -var memory=8192
 ```
 
 ## Jobs Created

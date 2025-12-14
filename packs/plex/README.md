@@ -24,19 +24,19 @@ This pack deploys [Plex Media Server](https://www.plex.tv/) to Nomad, with optio
 
 ```bash
 # Deploy with defaults (GPU enabled, backup enabled, update enabled)
-nomad-pack run plex --registry=media
+nomad-pack run plex --registry=mediaserver
 
 # Deploy without GPU transcoding
-nomad-pack run plex --registry=media -var gpu_transcoding=false
+nomad-pack run plex --registry=mediaserver -var gpu_transcoding=false
 
 # Deploy without backup job
-nomad-pack run plex --registry=media -var enable_backup=false
+nomad-pack run plex --registry=mediaserver -var enable_backup=false
 
 # Deploy without update job
-nomad-pack run plex --registry=media -var enable_update=false
+nomad-pack run plex --registry=mediaserver -var enable_update=false
 
 # Deploy with custom resources
-nomad-pack run plex --registry=media -var cpu=8000 -var memory=8192
+nomad-pack run plex --registry=mediaserver -var cpu=8000 -var memory=8192
 ```
 
 ## Jobs Created
