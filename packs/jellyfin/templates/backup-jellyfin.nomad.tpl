@@ -1,13 +1,13 @@
-[[- if .jellyfin.enable_backup ]]
-job "backup-[[ .jellyfin.job_name ]]" {
-  region      = "[[ .jellyfin.region ]]"
-  datacenters = [[ .jellyfin.datacenters | toJson ]]
-  namespace   = "[[ .jellyfin.namespace ]]"
+[[- if var "enable_backup" . ]]
+job "backup-[[ var "job_name" . ]]" {
+  region      = "[[ var "region" . ]]"
+  datacenters = [[ var "datacenters" . | toJson ]]
+  namespace   = "[[ var "namespace" . ]]"
   type        = "batch"
 
   periodic {
-    crons            = ["[[ .jellyfin.backup_cron_schedule ]]"]
-    time_zone        = "[[ .jellyfin.timezone ]]"
+    crons            = ["[[ var "backup_cron_schedule" . ]]"]
+    time_zone        = "[[ var "timezone" . ]]"
     prohibit_overlap = true
   }
 
@@ -28,13 +28,13 @@ job "backup-[[ .jellyfin.job_name ]]" {
 
     volume "jellyfin-config" {
       type      = "host"
-      source    = "[[ .jellyfin.config_volume_name ]]"
+      source    = "[[ var "config_volume_name" . ]]"
       read_only = true
     }
 
     volume "backup-drive" {
       type            = "csi"
-      source          = "[[ .jellyfin.backup_volume_name ]]"
+      source          = "[[ var "backup_volume_name" . ]]"
       access_mode     = "multi-node-multi-writer"
       attachment_mode = "file-system"
     }
@@ -101,8 +101,8 @@ else
 fi
 
 # Clean up old backups (keep last N days)
-echo "Cleaning up old backups (keeping last [[ .jellyfin.backup_retention_days ]] days)..."
-find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ .jellyfin.backup_retention_days ]] -exec rm -rf {} \; 2>/dev/null || true
+echo "Cleaning up old backups (keeping last [[ var "backup_retention_days" . ]] days)..."
+find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ var "backup_retention_days" . ]] -exec rm -rf {} \; 2>/dev/null || true
 
 # Show backup size
 echo "Backup complete. Size:"

@@ -1,7 +1,7 @@
-job "[[ .jellyfin.job_name ]]" {
-  region      = "[[ .jellyfin.region ]]"
-  datacenters = [[ .jellyfin.datacenters | toJson ]]
-  namespace   = "[[ .jellyfin.namespace ]]"
+job "[[ var "job_name" . ]]" {
+  region      = "[[ var "region" . ]]"
+  datacenters = [[ var "datacenters" . | toJson ]]
+  namespace   = "[[ var "namespace" . ]]"
   type        = "service"
 
   group "jellyfin" {
@@ -9,28 +9,28 @@ job "[[ .jellyfin.job_name ]]" {
 
     volume "media-drive" {
       type            = "csi"
-      source          = "[[ .jellyfin.media_volume_name ]]"
+      source          = "[[ var "media_volume_name" . ]]"
       access_mode     = "multi-node-multi-writer"
       attachment_mode = "file-system"
     }
 
     volume "jellyfin-config" {
       type   = "host"
-      source = "[[ .jellyfin.config_volume_name ]]"
+      source = "[[ var "config_volume_name" . ]]"
     }
 
     volume "jellyfin-cache" {
       type   = "host"
-      source = "[[ .jellyfin.cache_volume_name ]]"
+      source = "[[ var "cache_volume_name" . ]]"
     }
 
     network {
       mode = "host"
       port "http" {
-        static = [[ .jellyfin.http_port ]]
+        static = [[ var "http_port" . ]]
       }
       port "discovery" {
-        static = [[ .jellyfin.discovery_port ]]
+        static = [[ var "discovery_port" . ]]
       }
     }
 
@@ -38,15 +38,15 @@ job "[[ .jellyfin.job_name ]]" {
       driver = "podman"
 
       resources {
-        cpu    = [[ .jellyfin.cpu ]]
-        memory = [[ .jellyfin.memory ]]
+        cpu    = [[ var "cpu" . ]]
+        memory = [[ var "memory" . ]]
       }
 
       config {
-        image        = "[[ .jellyfin.image ]]"
+        image        = "[[ var "image" . ]]"
         ports        = ["http", "discovery"]
         network_mode = "host"
-[[- if .jellyfin.gpu_transcoding ]]
+[[- if var "gpu_transcoding" . ]]
         devices      = ["/dev/dri:/dev/dri"]
 [[- end ]]
       }
@@ -68,15 +68,15 @@ job "[[ .jellyfin.job_name ]]" {
 
       template {
         data = <<EOH
-TZ=[[ .jellyfin.timezone ]]
+TZ=[[ var "timezone" . ]]
 EOH
         destination = "local/env_vars"
         env         = true
       }
 
-[[- if .jellyfin.register_consul_service ]]
+[[- if var "register_consul_service" . ]]
       service {
-        name = "[[ .jellyfin.consul_service_name ]]"
+        name = "[[ var "consul_service_name" . ]]"
         port = "http"
 
         check {

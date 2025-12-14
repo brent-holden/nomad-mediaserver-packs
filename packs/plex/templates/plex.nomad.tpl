@@ -1,7 +1,7 @@
-job "[[ .plex.job_name ]]" {
-  region      = "[[ .plex.region ]]"
-  datacenters = [[ .plex.datacenters | toJson ]]
-  namespace   = "[[ .plex.namespace ]]"
+job "[[ var "job_name" . ]]" {
+  region      = "[[ var "region" . ]]"
+  datacenters = [[ var "datacenters" . | toJson ]]
+  namespace   = "[[ var "namespace" . ]]"
   type        = "service"
 
   group "plex" {
@@ -9,25 +9,25 @@ job "[[ .plex.job_name ]]" {
 
     volume "media-drive" {
       type            = "csi"
-      source          = "[[ .plex.media_volume_name ]]"
+      source          = "[[ var "media_volume_name" . ]]"
       access_mode     = "multi-node-multi-writer"
       attachment_mode = "file-system"
     }
 
     volume "plex-config" {
       type   = "host"
-      source = "[[ .plex.config_volume_name ]]"
+      source = "[[ var "config_volume_name" . ]]"
     }
 
     volume "plex-transcode" {
       type   = "host"
-      source = "[[ .plex.transcode_volume_name ]]"
+      source = "[[ var "transcode_volume_name" . ]]"
     }
 
     network {
       mode = "host"
       port "plex" {
-        static = [[ .plex.port ]]
+        static = [[ var "port" . ]]
       }
     }
 
@@ -35,15 +35,15 @@ job "[[ .plex.job_name ]]" {
       driver = "podman"
 
       resources {
-        cpu    = [[ .plex.cpu ]]
-        memory = [[ .plex.memory ]]
+        cpu    = [[ var "cpu" . ]]
+        memory = [[ var "memory" . ]]
       }
 
       config {
-        image        = "[[ .plex.image ]]"
+        image        = "[[ var "image" . ]]"
         ports        = ["plex"]
         network_mode = "host"
-[[- if .plex.gpu_transcoding ]]
+[[- if var "gpu_transcoding" . ]]
         devices      = ["/dev/dri:/dev/dri"]
 [[- end ]]
       }
@@ -65,19 +65,19 @@ job "[[ .plex.job_name ]]" {
 
       template {
         data = <<EOH
-TZ=[[ .plex.timezone ]]
+TZ=[[ var "timezone" . ]]
 PLEX_CLAIM={{- with nomadVar "nomad/jobs/plex" -}}{{ .claim_token }}{{- end }}
 VERSION={{- with nomadVar "nomad/jobs/plex" -}}{{ .version }}{{- end }}
-PLEX_UID=[[ .plex.plex_uid ]]
-PLEX_GID=[[ .plex.plex_gid ]]
+PLEX_UID=[[ var "plex_uid" . ]]
+PLEX_GID=[[ var "plex_gid" . ]]
 EOH
         destination = "local/env_vars"
         env         = true
       }
 
-[[- if .plex.register_consul_service ]]
+[[- if var "register_consul_service" . ]]
       service {
-        name = "[[ .plex.consul_service_name ]]"
+        name = "[[ var "consul_service_name" . ]]"
         port = "plex"
 
         check {
