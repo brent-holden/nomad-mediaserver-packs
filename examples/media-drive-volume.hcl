@@ -23,5 +23,5 @@ mount_options {
   fs_type = "cifs"
   # Replace <USERNAME> and <PASSWORD> with your credentials
   # Consider using Nomad variables or Vault for secrets in production
-  mount_flags = ["username=<USERNAME>", "password=<PASSWORD>", "uid=1000", "gid=1000", "file_mode=0755", "dir_mode=0755"]
+  mount_flags = ["username=<USERNAME>", "password=<PASSWORD>", "uid=1002", "gid=1001", "file_mode=0644", "dir_mode=0755", "vers=3.0"]
 }
