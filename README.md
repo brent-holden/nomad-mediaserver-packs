@@ -111,7 +111,52 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 | `update_cron_schedule` | Update schedule | `0 3 * * *` |
 | `backup_retention_days` | Days to keep backups | `14` |
 
-## Requirements
+## Volume Setup
+
+Before deploying packs, you must configure the required volumes. See the `examples/` directory for reference configurations.
+
+### CSI Volumes
+
+These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is recommended for NAS-based media libraries.
+
+1. **Install a CSI plugin** - See [nomad-media-csi-cifs](https://github.com/brent-holden/nomad-media-csi-cifs) for a complete CSI setup with Ansible.
+
+2. **Register CSI volumes:**
+   ```bash
+   # Edit examples/media-drive-volume.hcl with your fileserver details
+   nomad volume register examples/media-drive-volume.hcl
+
+   # If using backups, also register the backup volume
+   nomad volume register examples/backup-drive-volume.hcl
+   ```
+
+| Volume | Purpose | Required |
+|--------|---------|----------|
+| `media-drive` | Shared media library | Yes |
+| `backup-drive` | Backup storage | Only if `enable_backup=true` |
+
+### Host Volumes
+
+Host volumes provide persistent local storage for application configuration. Add these to your Nomad client configuration (see `examples/nomad-client-volumes.hcl`).
+
+**Plex:**
+| Volume | Purpose |
+|--------|---------|
+| `plex-config` | Plex configuration and database |
+| `plex-transcode` | Temporary transcoding files |
+
+**Jellyfin:**
+| Volume | Purpose |
+|--------|---------|
+| `jellyfin-config` | Jellyfin configuration and database |
+| `jellyfin-cache` | Cache for transcoding |
+
+After adding host volumes, restart the Nomad client:
+```bash
+sudo systemctl restart nomad
+```
+
+## Application Setup
 
 ### Plex
 
@@ -119,24 +164,13 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
    ```bash
    nomad var put nomad/jobs/plex claim_token="<YOUR-CLAIM-TOKEN>" version="latest"
    ```
+   Get your claim token from [plex.tv/claim](https://www.plex.tv/claim/).
 
-2. Configure host volumes:
-   - `plex-config` - Plex configuration data
-   - `plex-transcode` - Transcoding temporary files
-
-3. Configure CSI volumes:
-   - `media-drive` - Media library storage
-   - `backup-drive` - Backup storage (if `enable_backup=true`)
+2. (Optional) For GPU transcoding, ensure `/dev/dri` exists on the host.
 
 ### Jellyfin
 
-1. Configure host volumes:
-   - `jellyfin-config` - Jellyfin configuration data
-   - `jellyfin-cache` - Cache storage
-
-2. Configure CSI volumes:
-   - `media-drive` - Media library storage
-   - `backup-drive` - Backup storage (if `enable_backup=true`)
+No additional setup required. Jellyfin will initialize on first run.
 
 ## Destroying Deployments
 
