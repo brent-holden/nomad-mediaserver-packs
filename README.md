@@ -35,6 +35,8 @@ nomad-pack registry add media https://github.com/brent-holden/nomad-media-packs
 nomad-pack run plex --registry=media
 ```
 
+or
+
 ```bash
 nomad-pack run jellyfin --registry=media
 ```
