@@ -143,3 +143,40 @@ variable "nomad_variable_path" {
   type        = string
   default     = "nomad/jobs/plex"
 }
+
+# CSI Volume configuration
+variable "deploy_csi_volumes" {
+  description = "Deploy CSI volumes for media and backup storage"
+  type        = bool
+  default     = false
+}
+
+variable "csi_plugin_id" {
+  description = "The CSI plugin ID to use for volumes"
+  type        = string
+  default     = "smb"
+}
+
+variable "csi_volume_username" {
+  description = "Username for CIFS/SMB authentication"
+  type        = string
+  default     = "plex"
+}
+
+variable "csi_volume_password" {
+  description = "Password for CIFS/SMB authentication"
+  type        = string
+  default     = ""
+}
+
+variable "media_volume_source" {
+  description = "The CIFS/SMB source path for media volume (e.g., //192.168.1.100/media)"
+  type        = string
+  default     = ""
+}
+
+variable "backup_volume_source" {
+  description = "The CIFS/SMB source path for backup volume (e.g., //192.168.1.100/backups)"
+  type        = string
+  default     = ""
+}

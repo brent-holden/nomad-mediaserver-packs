@@ -34,6 +34,18 @@ variable "gpu_transcoding" {
   default     = true
 }
 
+variable "jellyfin_uid" {
+  description = "The UID for the Jellyfin user inside the container"
+  type        = number
+  default     = 1002
+}
+
+variable "jellyfin_gid" {
+  description = "The GID for the Jellyfin group inside the container"
+  type        = number
+  default     = 1001
+}
+
 variable "timezone" {
   description = "The timezone for the Jellyfin container"
   type        = string
@@ -136,4 +148,41 @@ variable "nomad_variable_path" {
   description = "The Nomad variable path to store the version"
   type        = string
   default     = "nomad/jobs/jellyfin"
+}
+
+# CSI Volume configuration
+variable "deploy_csi_volumes" {
+  description = "Deploy CSI volumes for media and backup storage"
+  type        = bool
+  default     = false
+}
+
+variable "csi_plugin_id" {
+  description = "The CSI plugin ID to use for volumes"
+  type        = string
+  default     = "smb"
+}
+
+variable "csi_volume_username" {
+  description = "Username for CIFS/SMB authentication"
+  type        = string
+  default     = "jellyfin"
+}
+
+variable "csi_volume_password" {
+  description = "Password for CIFS/SMB authentication"
+  type        = string
+  default     = ""
+}
+
+variable "media_volume_source" {
+  description = "The CIFS/SMB source path for media volume (e.g., //192.168.1.100/media)"
+  type        = string
+  default     = ""
+}
+
+variable "backup_volume_source" {
+  description = "The CIFS/SMB source path for backup volume (e.g., //192.168.1.100/backups)"
+  type        = string
+  default     = ""
 }
