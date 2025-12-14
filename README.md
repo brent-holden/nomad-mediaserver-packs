@@ -6,12 +6,13 @@ A Nomad Pack registry for deploying media server applications to HashiCorp Nomad
 
 | Pack | Description |
 |------|-------------|
-| `plex` | Plex Media Server with optional GPU transcoding |
-| `jellyfin` | Jellyfin Media Server |
-| `update-plex` | Periodic job to check for Plex updates |
-| `update-jellyfin` | Periodic job to check for Jellyfin updates |
-| `backup-plex` | Periodic job to backup Plex configuration |
-| `backup-jellyfin` | Periodic job to backup Jellyfin configuration |
+| `plex` | Plex Media Server with optional GPU transcoding, backup, and update jobs |
+| `jellyfin` | Jellyfin Media Server with optional backup and update jobs |
+
+Each pack includes:
+- **Main service** - The media server itself
+- **Backup job** - Periodic backup of configuration (enabled by default)
+- **Update job** - Periodic version check (enabled by default)
 
 ## Prerequisites
 
@@ -31,11 +32,17 @@ nomad-pack registry add media https://github.com/brent-holden/nomad-media-packs
 ### Deploy Plex
 
 ```bash
-# With GPU transcoding (default)
+# With GPU transcoding, backup, and update jobs (defaults)
 nomad-pack run plex --registry=media
 
 # Without GPU transcoding
 nomad-pack run plex --registry=media -var gpu_transcoding=false
+
+# Without backup job
+nomad-pack run plex --registry=media -var enable_backup=false
+
+# Without update job
+nomad-pack run plex --registry=media -var enable_update=false
 
 # With custom variables file
 nomad-pack run plex --registry=media -f my-plex-vars.hcl
@@ -44,27 +51,14 @@ nomad-pack run plex --registry=media -f my-plex-vars.hcl
 ### Deploy Jellyfin
 
 ```bash
+# With backup and update jobs (defaults)
 nomad-pack run jellyfin --registry=media
-```
 
-### Deploy Update Jobs
+# Without backup job
+nomad-pack run jellyfin --registry=media -var enable_backup=false
 
-```bash
-# Check for Plex updates daily at 3am
-nomad-pack run update-plex --registry=media
-
-# Check for Jellyfin updates daily at 3am
-nomad-pack run update-jellyfin --registry=media
-```
-
-### Deploy Backup Jobs
-
-```bash
-# Backup Plex config daily at 2am
-nomad-pack run backup-plex --registry=media
-
-# Backup Jellyfin config daily at 2am
-nomad-pack run backup-jellyfin --registry=media
+# Service only (no backup or update)
+nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
 ```
 
 ## Configuration
@@ -88,6 +82,7 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 | `datacenters` | List of eligible datacenters | `["dc1"]` |
 | `region` | Nomad region | `global` |
 | `namespace` | Nomad namespace | `default` |
+| `timezone` | Timezone for schedules | `America/New_York` |
 
 ### Plex Variables
 
@@ -98,6 +93,11 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 | `plex_gid` | GID for Plex group | `1001` |
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |
+| `enable_backup` | Deploy backup job | `true` |
+| `enable_update` | Deploy update job | `true` |
+| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
+| `update_cron_schedule` | Update schedule | `0 3 * * *` |
+| `backup_retention_days` | Days to keep backups | `14` |
 
 ### Jellyfin Variables
 
@@ -105,6 +105,11 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 |----------|-------------|---------|
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |
+| `enable_backup` | Deploy backup job | `true` |
+| `enable_update` | Deploy update job | `true` |
+| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
+| `update_cron_schedule` | Update schedule | `0 3 * * *` |
+| `backup_retention_days` | Days to keep backups | `14` |
 
 ## Requirements
 
@@ -119,8 +124,9 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
    - `plex-config` - Plex configuration data
    - `plex-transcode` - Transcoding temporary files
 
-3. Configure CSI volume:
+3. Configure CSI volumes:
    - `media-drive` - Media library storage
+   - `backup-drive` - Backup storage (if `enable_backup=true`)
 
 ### Jellyfin
 
@@ -128,8 +134,9 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
    - `jellyfin-config` - Jellyfin configuration data
    - `jellyfin-cache` - Cache storage
 
-2. Configure CSI volume:
+2. Configure CSI volumes:
    - `media-drive` - Media library storage
+   - `backup-drive` - Backup storage (if `enable_backup=true`)
 
 ## Destroying Deployments
 

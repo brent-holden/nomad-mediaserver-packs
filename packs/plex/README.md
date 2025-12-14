@@ -1,6 +1,6 @@
 # Plex Media Server Pack
 
-This pack deploys [Plex Media Server](https://www.plex.tv/) to Nomad.
+This pack deploys [Plex Media Server](https://www.plex.tv/) to Nomad, with optional backup and version update jobs.
 
 ## Prerequisites
 
@@ -14,25 +14,44 @@ This pack deploys [Plex Media Server](https://www.plex.tv/) to Nomad.
    - `plex-config` - Persistent configuration storage
    - `plex-transcode` - Temporary transcoding files
 
-3. **CSI Volume** - Configure media storage:
+3. **CSI Volumes** - Configure storage:
    - `media-drive` - Your media library
+   - `backup-drive` - Backup storage (if `enable_backup=true`)
 
 4. **GPU (Optional)** - For hardware transcoding, ensure `/dev/dri` exists on host.
 
 ## Usage
 
 ```bash
-# Deploy with defaults (GPU enabled)
+# Deploy with defaults (GPU enabled, backup enabled, update enabled)
 nomad-pack run plex --registry=media
 
 # Deploy without GPU transcoding
 nomad-pack run plex --registry=media -var gpu_transcoding=false
 
+# Deploy without backup job
+nomad-pack run plex --registry=media -var enable_backup=false
+
+# Deploy without update job
+nomad-pack run plex --registry=media -var enable_update=false
+
 # Deploy with custom resources
 nomad-pack run plex --registry=media -var cpu=8000 -var memory=8192
 ```
 
+## Jobs Created
+
+This pack creates up to 3 Nomad jobs:
+
+| Job | Description | Controlled By |
+|-----|-------------|---------------|
+| `plex` | Main Plex Media Server service | Always created |
+| `backup-plex` | Periodic backup of Plex config | `enable_backup` |
+| `update-plex` | Periodic version check | `enable_update` |
+
 ## Variables
+
+### Service Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -53,6 +72,23 @@ nomad-pack run plex --registry=media -var cpu=8000 -var memory=8192
 | `transcode_volume_name` | Transcode host volume | `plex-transcode` |
 | `register_consul_service` | Register with Consul | `true` |
 | `consul_service_name` | Consul service name | `plex` |
+
+### Backup Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `enable_backup` | Enable backup job | `true` |
+| `backup_cron_schedule` | Backup schedule | `0 2 * * *` (2am daily) |
+| `backup_volume_name` | CSI volume for backups | `backup-drive` |
+| `backup_retention_days` | Days to retain backups | `14` |
+
+### Update Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `enable_update` | Enable update job | `true` |
+| `update_cron_schedule` | Update schedule | `0 3 * * *` (3am daily) |
+| `nomad_variable_path` | Nomad variable path | `nomad/jobs/plex` |
 
 ## Access
 

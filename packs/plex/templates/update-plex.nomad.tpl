@@ -1,12 +1,13 @@
-job "[[ .update_plex.job_name ]]" {
-  region      = "[[ .update_plex.region ]]"
-  datacenters = [[ .update_plex.datacenters | toJson ]]
-  namespace   = "[[ .update_plex.namespace ]]"
+[[- if .plex.enable_update ]]
+job "update-[[ .plex.job_name ]]" {
+  region      = "[[ .plex.region ]]"
+  datacenters = [[ .plex.datacenters | toJson ]]
+  namespace   = "[[ .plex.namespace ]]"
   type        = "batch"
 
   periodic {
-    crons            = ["[[ .update_plex.cron_schedule ]]"]
-    time_zone        = "[[ .update_plex.timezone ]]"
+    crons            = ["[[ .plex.update_cron_schedule ]]"]
+    time_zone        = "[[ .plex.timezone ]]"
     prohibit_overlap = true
   }
 
@@ -29,7 +30,7 @@ job "[[ .update_plex.job_name ]]" {
       driver = "podman"
 
       config {
-        image = "[[ .update_plex.image ]]"
+        image = "docker.io/debian:bookworm-slim"
         args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/update-plex-version.sh"]
       }
 
@@ -55,7 +56,7 @@ fi
 echo "Extracted Plex version: $PLEX_VERSION"
 
 # Get existing claim token from Nomad variable (rendered by template)
-EXISTING_TOKEN="{{- with nomadVar "[[ .update_plex.nomad_variable_path ]]" -}}{{ .claim_token }}{{- end -}}"
+EXISTING_TOKEN="{{- with nomadVar "[[ .plex.nomad_variable_path ]]" -}}{{ .claim_token }}{{- end -}}"
 
 if [ -z "$EXISTING_TOKEN" ]; then
     echo "Warning: No existing claim token found, using placeholder"
@@ -71,9 +72,9 @@ unzip -q /tmp/nomad.zip -d /tmp/
 chmod +x /tmp/nomad
 
 echo "Writing version to Nomad variable..."
-/tmp/nomad var put -force [[ .update_plex.nomad_variable_path ]] claim_token="$EXISTING_TOKEN" version="$PLEX_VERSION"
+/tmp/nomad var put -force [[ .plex.nomad_variable_path ]] claim_token="$EXISTING_TOKEN" version="$PLEX_VERSION"
 
-echo "Successfully updated Nomad variable [[ .update_plex.nomad_variable_path ]] with version: $PLEX_VERSION"
+echo "Successfully updated Nomad variable [[ .plex.nomad_variable_path ]] with version: $PLEX_VERSION"
 EOF
         destination = "local/update-plex-version.sh"
         perms       = "0755"
@@ -84,9 +85,10 @@ EOF
       }
 
       resources {
-        cpu    = [[ .update_plex.cpu ]]
-        memory = [[ .update_plex.memory ]]
+        cpu    = 200
+        memory = 256
       }
     }
   }
 }
+[[- end ]]

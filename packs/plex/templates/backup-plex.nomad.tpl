@@ -1,12 +1,13 @@
-job "[[ .backup_plex.job_name ]]" {
-  region      = "[[ .backup_plex.region ]]"
-  datacenters = [[ .backup_plex.datacenters | toJson ]]
-  namespace   = "[[ .backup_plex.namespace ]]"
+[[- if .plex.enable_backup ]]
+job "backup-[[ .plex.job_name ]]" {
+  region      = "[[ .plex.region ]]"
+  datacenters = [[ .plex.datacenters | toJson ]]
+  namespace   = "[[ .plex.namespace ]]"
   type        = "batch"
 
   periodic {
-    crons            = ["[[ .backup_plex.cron_schedule ]]"]
-    time_zone        = "[[ .backup_plex.timezone ]]"
+    crons            = ["[[ .plex.backup_cron_schedule ]]"]
+    time_zone        = "[[ .plex.timezone ]]"
     prohibit_overlap = true
   }
 
@@ -27,13 +28,13 @@ job "[[ .backup_plex.job_name ]]" {
 
     volume "plex-config" {
       type      = "host"
-      source    = "[[ .backup_plex.config_volume_name ]]"
+      source    = "[[ .plex.config_volume_name ]]"
       read_only = true
     }
 
     volume "backup-drive" {
       type            = "csi"
-      source          = "[[ .backup_plex.backup_volume_name ]]"
+      source          = "[[ .plex.backup_volume_name ]]"
       access_mode     = "multi-node-multi-writer"
       attachment_mode = "file-system"
     }
@@ -42,7 +43,7 @@ job "[[ .backup_plex.job_name ]]" {
       driver = "podman"
 
       config {
-        image = "[[ .backup_plex.image ]]"
+        image = "docker.io/debian:bookworm-slim"
         args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/backup-plex.sh"]
       }
 
@@ -100,8 +101,8 @@ else
 fi
 
 # Clean up old backups (keep last N days)
-echo "Cleaning up old backups (keeping last [[ .backup_plex.retention_days ]] days)..."
-find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ .backup_plex.retention_days ]] -exec rm -rf {} \; 2>/dev/null || true
+echo "Cleaning up old backups (keeping last [[ .plex.backup_retention_days ]] days)..."
+find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ .plex.backup_retention_days ]] -exec rm -rf {} \; 2>/dev/null || true
 
 # Show backup size
 echo "Backup complete. Size:"
@@ -114,9 +115,10 @@ EOF
       }
 
       resources {
-        cpu    = [[ .backup_plex.cpu ]]
-        memory = [[ .backup_plex.memory ]]
+        cpu    = 500
+        memory = 512
       }
     }
   }
 }
+[[- end ]]

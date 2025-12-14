@@ -1,12 +1,13 @@
-job "[[ .backup_jellyfin.job_name ]]" {
-  region      = "[[ .backup_jellyfin.region ]]"
-  datacenters = [[ .backup_jellyfin.datacenters | toJson ]]
-  namespace   = "[[ .backup_jellyfin.namespace ]]"
+[[- if .jellyfin.enable_backup ]]
+job "backup-[[ .jellyfin.job_name ]]" {
+  region      = "[[ .jellyfin.region ]]"
+  datacenters = [[ .jellyfin.datacenters | toJson ]]
+  namespace   = "[[ .jellyfin.namespace ]]"
   type        = "batch"
 
   periodic {
-    crons            = ["[[ .backup_jellyfin.cron_schedule ]]"]
-    time_zone        = "[[ .backup_jellyfin.timezone ]]"
+    crons            = ["[[ .jellyfin.backup_cron_schedule ]]"]
+    time_zone        = "[[ .jellyfin.timezone ]]"
     prohibit_overlap = true
   }
 
@@ -27,13 +28,13 @@ job "[[ .backup_jellyfin.job_name ]]" {
 
     volume "jellyfin-config" {
       type      = "host"
-      source    = "[[ .backup_jellyfin.config_volume_name ]]"
+      source    = "[[ .jellyfin.config_volume_name ]]"
       read_only = true
     }
 
     volume "backup-drive" {
       type            = "csi"
-      source          = "[[ .backup_jellyfin.backup_volume_name ]]"
+      source          = "[[ .jellyfin.backup_volume_name ]]"
       access_mode     = "multi-node-multi-writer"
       attachment_mode = "file-system"
     }
@@ -42,7 +43,7 @@ job "[[ .backup_jellyfin.job_name ]]" {
       driver = "podman"
 
       config {
-        image = "[[ .backup_jellyfin.image ]]"
+        image = "docker.io/debian:bookworm-slim"
         args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/backup-jellyfin.sh"]
       }
 
@@ -100,8 +101,8 @@ else
 fi
 
 # Clean up old backups (keep last N days)
-echo "Cleaning up old backups (keeping last [[ .backup_jellyfin.retention_days ]] days)..."
-find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ .backup_jellyfin.retention_days ]] -exec rm -rf {} \; 2>/dev/null || true
+echo "Cleaning up old backups (keeping last [[ .jellyfin.backup_retention_days ]] days)..."
+find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ .jellyfin.backup_retention_days ]] -exec rm -rf {} \; 2>/dev/null || true
 
 # Show backup size
 echo "Backup complete. Size:"
@@ -114,9 +115,10 @@ EOF
       }
 
       resources {
-        cpu    = [[ .backup_jellyfin.cpu ]]
-        memory = [[ .backup_jellyfin.memory ]]
+        cpu    = 500
+        memory = 512
       }
     }
   }
 }
+[[- end ]]

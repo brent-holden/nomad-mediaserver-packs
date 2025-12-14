@@ -87,3 +87,47 @@ variable "consul_service_name" {
   type        = string
   default     = "jellyfin"
 }
+
+# Backup job configuration
+variable "enable_backup" {
+  description = "Enable periodic backup job for Jellyfin configuration"
+  type        = bool
+  default     = true
+}
+
+variable "backup_cron_schedule" {
+  description = "Cron schedule for the backup job"
+  type        = string
+  default     = "0 2 * * *"
+}
+
+variable "backup_volume_name" {
+  description = "The name of the CSI volume for backups"
+  type        = string
+  default     = "backup-drive"
+}
+
+variable "backup_retention_days" {
+  description = "Number of days to retain backups"
+  type        = number
+  default     = 14
+}
+
+# Update job configuration
+variable "enable_update" {
+  description = "Enable periodic job to fetch latest Jellyfin version"
+  type        = bool
+  default     = true
+}
+
+variable "update_cron_schedule" {
+  description = "Cron schedule for the update job"
+  type        = string
+  default     = "0 3 * * *"
+}
+
+variable "nomad_variable_path" {
+  description = "The Nomad variable path to store the version"
+  type        = string
+  default     = "nomad/jobs/jellyfin"
+}

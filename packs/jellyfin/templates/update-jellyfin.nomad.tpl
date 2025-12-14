@@ -1,12 +1,13 @@
-job "[[ .update_jellyfin.job_name ]]" {
-  region      = "[[ .update_jellyfin.region ]]"
-  datacenters = [[ .update_jellyfin.datacenters | toJson ]]
-  namespace   = "[[ .update_jellyfin.namespace ]]"
+[[- if .jellyfin.enable_update ]]
+job "update-[[ .jellyfin.job_name ]]" {
+  region      = "[[ .jellyfin.region ]]"
+  datacenters = [[ .jellyfin.datacenters | toJson ]]
+  namespace   = "[[ .jellyfin.namespace ]]"
   type        = "batch"
 
   periodic {
-    crons            = ["[[ .update_jellyfin.cron_schedule ]]"]
-    time_zone        = "[[ .update_jellyfin.timezone ]]"
+    crons            = ["[[ .jellyfin.update_cron_schedule ]]"]
+    time_zone        = "[[ .jellyfin.timezone ]]"
     prohibit_overlap = true
   }
 
@@ -29,7 +30,7 @@ job "[[ .update_jellyfin.job_name ]]" {
       driver = "podman"
 
       config {
-        image = "[[ .update_jellyfin.image ]]"
+        image = "docker.io/debian:bookworm-slim"
         args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/update-jellyfin-version.sh"]
       }
 
@@ -63,9 +64,9 @@ unzip -q /tmp/nomad.zip -d /tmp/
 chmod +x /tmp/nomad
 
 echo "Writing version to Nomad variable..."
-/tmp/nomad var put -force [[ .update_jellyfin.nomad_variable_path ]] version="$JELLYFIN_VERSION"
+/tmp/nomad var put -force [[ .jellyfin.nomad_variable_path ]] version="$JELLYFIN_VERSION"
 
-echo "Successfully updated Nomad variable [[ .update_jellyfin.nomad_variable_path ]] with version: $JELLYFIN_VERSION"
+echo "Successfully updated Nomad variable [[ .jellyfin.nomad_variable_path ]] with version: $JELLYFIN_VERSION"
 EOF
         destination = "local/update-jellyfin-version.sh"
         perms       = "0755"
@@ -76,9 +77,10 @@ EOF
       }
 
       resources {
-        cpu    = [[ .update_jellyfin.cpu ]]
-        memory = [[ .update_jellyfin.memory ]]
+        cpu    = 200
+        memory = 256
       }
     }
   }
 }
+[[- end ]]
