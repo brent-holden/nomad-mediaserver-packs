@@ -127,18 +127,15 @@ Optionally deploy CSI volumes as part of the pack (disabled by default):
 | `csi_plugin_id` | CSI plugin ID to use | `smb` |
 | `csi_volume_username` | Username for CIFS/SMB authentication | `plex`/`jellyfin` |
 | `csi_volume_password` | Password for CIFS/SMB authentication | `""` |
-| `media_volume_source` | CIFS/SMB source path (e.g., `//192.168.1.100/media`) | `""` |
-| `backup_volume_source` | CIFS/SMB source path (e.g., `//192.168.1.100/backups`) | `""` |
+| `media_volume_source` | CIFS/SMB source path for media | `//10.100.0.1/media` |
+| `backup_volume_source` | CIFS/SMB source path for backups | `//10.100.0.1/backups` |
 
 Example deploying with CSI volumes:
 
 ```bash
 nomad-pack run plex --registry=media \
   -var deploy_csi_volumes=true \
-  -var csi_volume_username=plex \
-  -var csi_volume_password=secret \
-  -var media_volume_source="//192.168.1.100/media" \
-  -var backup_volume_source="//192.168.1.100/backups"
+  -var csi_volume_password=secret
 ```
 
 ## Volume Setup
