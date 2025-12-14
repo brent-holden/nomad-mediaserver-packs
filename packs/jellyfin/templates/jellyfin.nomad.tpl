@@ -46,6 +46,9 @@ job "[[ .jellyfin.job_name ]]" {
         image        = "[[ .jellyfin.image ]]"
         ports        = ["http", "discovery"]
         network_mode = "host"
+[[- if .jellyfin.gpu_transcoding ]]
+        devices      = ["/dev/dri:/dev/dri"]
+[[- end ]]
       }
 
       volume_mount {

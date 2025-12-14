@@ -12,11 +12,16 @@ This pack deploys [Jellyfin](https://jellyfin.org/) to Nomad, with optional back
    - `media-drive` - Your media library
    - `backup-drive` - Backup storage (if `enable_backup=true`)
 
+3. **GPU (Optional)** - For hardware transcoding, ensure `/dev/dri` exists on host.
+
 ## Usage
 
 ```bash
 # Deploy with defaults (backup enabled, update enabled)
 nomad-pack run jellyfin --registry=media
+
+# Deploy with GPU transcoding
+nomad-pack run jellyfin --registry=media -var gpu_transcoding=true
 
 # Deploy without backup job
 nomad-pack run jellyfin --registry=media -var enable_backup=false
@@ -49,6 +54,7 @@ This pack creates up to 3 Nomad jobs:
 | `region` | Nomad region | `global` |
 | `namespace` | Nomad namespace | `default` |
 | `image` | Container image | `docker.io/jellyfin/jellyfin:latest` |
+| `gpu_transcoding` | Enable GPU passthrough | `false` |
 | `timezone` | Container timezone | `America/New_York` |
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |

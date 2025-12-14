@@ -7,7 +7,7 @@ A Nomad Pack registry for deploying media server applications to HashiCorp Nomad
 | Pack | Description |
 |------|-------------|
 | `plex` | Plex Media Server with optional GPU transcoding, backup, and update jobs |
-| `jellyfin` | Jellyfin Media Server with optional backup and update jobs |
+| `jellyfin` | Jellyfin Media Server with optional GPU transcoding, backup, and update jobs |
 
 Each pack includes:
 - **Main service** - The media server itself
@@ -103,6 +103,7 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `false` |
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |
 | `enable_backup` | Deploy backup job | `true` |

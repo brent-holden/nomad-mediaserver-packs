@@ -28,6 +28,12 @@ variable "image" {
   default     = "docker.io/jellyfin/jellyfin:latest"
 }
 
+variable "gpu_transcoding" {
+  description = "Enable GPU passthrough for hardware transcoding (requires /dev/dri on host)"
+  type        = bool
+  default     = false
+}
+
 variable "timezone" {
   description = "The timezone for the Jellyfin container"
   type        = string
