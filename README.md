@@ -137,6 +137,11 @@ These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is reco
    nomad volume register examples/backup-drive-volume.hcl
    ```
 
+   **Important:** For CIFS/SMB backup volumes, include `cache=none` and `nobrl` in the mount flags to ensure rsync operations work correctly:
+   ```hcl
+   mount_flags = ["uid=1002", "gid=1001", "file_mode=0644", "dir_mode=0755", "vers=3.0", "cache=none", "nobrl"]
+   ```
+
 | Volume | Purpose | Required |
 |--------|---------|----------|
 | `media-drive` | Shared media library | Yes |
