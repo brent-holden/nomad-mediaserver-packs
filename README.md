@@ -18,125 +18,8 @@ Each pack includes:
 
 - [Nomad](https://developer.hashicorp.com/nomad/install) cluster running
 - [Nomad Pack](https://developer.hashicorp.com/nomad/docs/tools/nomad-pack) installed (v0.1.0+ with v2 template parser)
-- CSI plugin configured for media storage (SMB/CIFS recommended)
-- Host volumes configured for application data
-
-## Quick Start
-
-### Add the Registry
-
-```bash
-nomad-pack registry add media https://github.com/brent-holden/nomad-mediaserver-packs
-```
-
-### Deploy
-
-```bash
-nomad-pack run plex --registry=media
-```
-
-or
-
-```bash
-nomad-pack run jellyfin --registry=media
-```
-
-By default, packs deploy with GPU transcoding, backup jobs, and update jobs enabled.
-
-## Configuration
-
-### Optional Flags
-
-Disable features using `-var` flags:
-
-```bash
-# Disable GPU transcoding
-nomad-pack run plex --registry=media -var gpu_transcoding=false
-
-# Disable backup job
-nomad-pack run plex --registry=media -var enable_backup=false
-
-# Disable update job
-nomad-pack run plex --registry=media -var enable_update=false
-
-# Disable multiple features
-nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
-
-# Use a custom variables file
-nomad-pack run plex --registry=media -f my-plex-vars.hcl
-```
-
-Each pack has configurable variables. View available variables:
-
-```bash
-nomad-pack info plex --registry=media
-```
-
-Generate a variables file:
-
-```bash
-nomad-pack generate var-file plex --registry=media > plex-vars.hcl
-```
-
-### Common Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `datacenters` | List of eligible datacenters | `["dc1"]` |
-| `region` | Nomad region | `global` |
-| `namespace` | Nomad namespace | `default` |
-| `timezone` | Timezone for schedules | `America/New_York` |
-
-### Plex Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
-| `plex_uid` | UID for Plex user | `1002` |
-| `plex_gid` | GID for Plex group | `1001` |
-| `cpu` | CPU allocation (MHz) | `16000` |
-| `memory` | Memory allocation (MB) | `16384` |
-| `enable_backup` | Deploy backup job | `true` |
-| `enable_update` | Deploy update job | `true` |
-| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
-| `update_cron_schedule` | Update schedule | `0 3 * * *` |
-| `backup_retention_days` | Days to keep backups | `14` |
-
-### Jellyfin Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
-| `jellyfin_uid` | UID for Jellyfin user | `1002` |
-| `jellyfin_gid` | GID for Jellyfin group | `1001` |
-| `cpu` | CPU allocation (MHz) | `16000` |
-| `memory` | Memory allocation (MB) | `16384` |
-| `enable_backup` | Deploy backup job | `true` |
-| `enable_update` | Deploy update job | `true` |
-| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
-| `update_cron_schedule` | Update schedule | `0 3 * * *` |
-| `backup_retention_days` | Days to keep backups | `14` |
-
-### CSI Volume Variables
-
-Optionally deploy CSI volumes as part of the pack (disabled by default):
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `deploy_csi_volumes` | Deploy CSI volumes for media and backup storage | `false` |
-| `csi_plugin_id` | CSI plugin ID to use | `smb` |
-| `csi_volume_username` | Username for CIFS/SMB authentication | `plex`/`jellyfin` |
-| `csi_volume_password` | Password for CIFS/SMB authentication | `""` |
-| `media_volume_source` | CIFS/SMB source path for media | `//10.100.0.1/media` |
-| `backup_volume_source` | CIFS/SMB source path for backups | `//10.100.0.1/backups` |
-
-Example deploying with CSI volumes:
-
-```bash
-nomad-pack run plex --registry=media \
-  -var deploy_csi_volumes=true \
-  -var csi_volume_password=secret
-```
+- [Host volumes](#host-volumes-required) configured for application data
+- [CSI volumes](#csi-volumes) configured for media storage (SMB/CIFS recommended)
 
 ## Volume Setup
 
@@ -256,6 +139,123 @@ nomad-pack run plex --registry=media \
 |--------|--------------|---------|----------|
 | Media | `media-drive` | Shared media library (NAS mount) | Yes |
 | Backup | `backup-drive` | Backup storage location | Only if `enable_backup=true` |
+
+## Quick Start
+
+### Add the Registry
+
+```bash
+nomad-pack registry add media https://github.com/brent-holden/nomad-mediaserver-packs
+```
+
+### Deploy
+
+```bash
+nomad-pack run plex --registry=media
+```
+
+or
+
+```bash
+nomad-pack run jellyfin --registry=media
+```
+
+By default, packs deploy with GPU transcoding, backup jobs, and update jobs enabled.
+
+## Configuration
+
+### Optional Flags
+
+Disable features using `-var` flags:
+
+```bash
+# Disable GPU transcoding
+nomad-pack run plex --registry=media -var gpu_transcoding=false
+
+# Disable backup job
+nomad-pack run plex --registry=media -var enable_backup=false
+
+# Disable update job
+nomad-pack run plex --registry=media -var enable_update=false
+
+# Disable multiple features
+nomad-pack run jellyfin --registry=media -var enable_backup=false -var enable_update=false
+
+# Use a custom variables file
+nomad-pack run plex --registry=media -f my-plex-vars.hcl
+```
+
+Each pack has configurable variables. View available variables:
+
+```bash
+nomad-pack info plex --registry=media
+```
+
+Generate a variables file:
+
+```bash
+nomad-pack generate var-file plex --registry=media > plex-vars.hcl
+```
+
+### Common Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `datacenters` | List of eligible datacenters | `["dc1"]` |
+| `region` | Nomad region | `global` |
+| `namespace` | Nomad namespace | `default` |
+| `timezone` | Timezone for schedules | `America/New_York` |
+
+### Plex Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
+| `plex_uid` | UID for Plex user | `1002` |
+| `plex_gid` | GID for Plex group | `1001` |
+| `cpu` | CPU allocation (MHz) | `16000` |
+| `memory` | Memory allocation (MB) | `16384` |
+| `enable_backup` | Deploy backup job | `true` |
+| `enable_update` | Deploy update job | `true` |
+| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
+| `update_cron_schedule` | Update schedule | `0 3 * * *` |
+| `backup_retention_days` | Days to keep backups | `14` |
+
+### Jellyfin Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
+| `jellyfin_uid` | UID for Jellyfin user | `1002` |
+| `jellyfin_gid` | GID for Jellyfin group | `1001` |
+| `cpu` | CPU allocation (MHz) | `16000` |
+| `memory` | Memory allocation (MB) | `16384` |
+| `enable_backup` | Deploy backup job | `true` |
+| `enable_update` | Deploy update job | `true` |
+| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
+| `update_cron_schedule` | Update schedule | `0 3 * * *` |
+| `backup_retention_days` | Days to keep backups | `14` |
+
+### CSI Volume Variables
+
+Optionally deploy CSI volumes as part of the pack (disabled by default):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `deploy_csi_volumes` | Deploy CSI volumes for media and backup storage | `false` |
+| `csi_plugin_id` | CSI plugin ID to use | `smb` |
+| `csi_volume_username` | Username for CIFS/SMB authentication | `plex`/`jellyfin` |
+| `csi_volume_password` | Password for CIFS/SMB authentication | `""` |
+| `media_volume_source` | CIFS/SMB source path for media | `//10.100.0.1/media` |
+| `backup_volume_source` | CIFS/SMB source path for backups | `//10.100.0.1/backups` |
+
+Example deploying with CSI volumes:
+
+```bash
+nomad-pack run plex --registry=media \
+  -var deploy_csi_volumes=true \
+  -var csi_volume_password=secret
+```
 
 ## Application Setup
 
