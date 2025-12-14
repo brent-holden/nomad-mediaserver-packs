@@ -140,11 +140,96 @@ nomad-pack run plex --registry=media \
 
 ## Volume Setup
 
-Before deploying packs, you must configure the required volumes. You can either deploy CSI volumes via the pack (using `deploy_csi_volumes=true`) or register them manually. See the `examples/` directory for reference configurations.
+Before deploying packs, you must configure both host volumes (for local configuration storage) and CSI volumes (for shared media storage).
+
+### Host Volumes (Required)
+
+Host volumes provide persistent local storage for application configuration. These must be configured on each Nomad client that will run the media server.
+
+#### 1. Create the directories
+
+**For Plex:**
+```bash
+sudo mkdir -p /opt/nomad/volumes/plex-config
+sudo mkdir -p /opt/nomad/volumes/plex-transcode
+sudo chown -R 1002:1001 /opt/nomad/volumes/plex-config
+sudo chown -R 1002:1001 /opt/nomad/volumes/plex-transcode
+```
+
+**For Jellyfin:**
+```bash
+sudo mkdir -p /opt/nomad/volumes/jellyfin-config
+sudo mkdir -p /opt/nomad/volumes/jellyfin-cache
+sudo chown -R 1002:1001 /opt/nomad/volumes/jellyfin-config
+sudo chown -R 1002:1001 /opt/nomad/volumes/jellyfin-cache
+```
+
+#### 2. Configure Nomad client
+
+Add host volumes to your Nomad client configuration (e.g., `/etc/nomad.d/client.hcl`):
+
+**For Plex:**
+```hcl
+client {
+  host_volume "plex-config" {
+    path      = "/opt/nomad/volumes/plex-config"
+    read_only = false
+  }
+
+  host_volume "plex-transcode" {
+    path      = "/opt/nomad/volumes/plex-transcode"
+    read_only = false
+  }
+}
+```
+
+**For Jellyfin:**
+```hcl
+client {
+  host_volume "jellyfin-config" {
+    path      = "/opt/nomad/volumes/jellyfin-config"
+    read_only = false
+  }
+
+  host_volume "jellyfin-cache" {
+    path      = "/opt/nomad/volumes/jellyfin-cache"
+    read_only = false
+  }
+}
+```
+
+See `examples/nomad-client-volumes.hcl` for a complete example.
+
+#### 3. Restart Nomad client
+
+```bash
+sudo systemctl restart nomad
+```
+
+#### Host Volume Summary
+
+| Pack | Volume | Default Name | Purpose |
+|------|--------|--------------|---------|
+| Plex | Config | `plex-config` | Plex configuration, database, and metadata |
+| Plex | Transcode | `plex-transcode` | Temporary transcoding files |
+| Jellyfin | Config | `jellyfin-config` | Jellyfin configuration, database, and metadata |
+| Jellyfin | Cache | `jellyfin-cache` | Cache and transcoding files |
 
 ### CSI Volumes
 
 These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is recommended for NAS-based media libraries.
+
+#### Option A: Deploy CSI volumes with the pack
+
+Set `deploy_csi_volumes=true` when running the pack:
+
+```bash
+nomad-pack run plex --registry=media \
+  -var deploy_csi_volumes=true \
+  -var csi_volume_password=your-password
+```
+
+#### Option B: Register CSI volumes manually
 
 1. **Install a CSI plugin** - See [nomad-media-infra](https://github.com/brent-holden/nomad-media-infra) for complete CSI setup including:
    - CSI controller and node plugin job specifications
@@ -165,31 +250,12 @@ These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is reco
    mount_flags = ["uid=1002", "gid=1001", "file_mode=0644", "dir_mode=0755", "vers=3.0", "cache=none", "nobrl"]
    ```
 
-| Volume | Purpose | Required |
-|--------|---------|----------|
-| `media-drive` | Shared media library | Yes |
-| `backup-drive` | Backup storage | Only if `enable_backup=true` |
+#### CSI Volume Summary
 
-### Host Volumes
-
-Host volumes provide persistent local storage for application configuration. Add these to your Nomad client configuration (see `examples/nomad-client-volumes.hcl`).
-
-**Plex:**
-| Volume | Purpose |
-|--------|---------|
-| `plex-config` | Plex configuration and database |
-| `plex-transcode` | Temporary transcoding files |
-
-**Jellyfin:**
-| Volume | Purpose |
-|--------|---------|
-| `jellyfin-config` | Jellyfin configuration and database |
-| `jellyfin-cache` | Cache for transcoding |
-
-After adding host volumes, restart the Nomad client:
-```bash
-sudo systemctl restart nomad
-```
+| Volume | Default Name | Purpose | Required |
+|--------|--------------|---------|----------|
+| Media | `media-drive` | Shared media library (NAS mount) | Yes |
+| Backup | `backup-drive` | Backup storage location | Only if `enable_backup=true` |
 
 ## Application Setup
 
