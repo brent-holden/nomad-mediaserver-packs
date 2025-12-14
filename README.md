@@ -17,7 +17,7 @@ Each pack includes:
 ## Prerequisites
 
 - [Nomad](https://developer.hashicorp.com/nomad/install) cluster running
-- [Nomad Pack](https://developer.hashicorp.com/nomad/docs/tools/nomad-pack) installed
+- [Nomad Pack](https://developer.hashicorp.com/nomad/docs/tools/nomad-pack) installed (v0.1.0+ with v2 template parser)
 - CSI plugin configured for media storage (SMB/CIFS recommended)
 - Host volumes configured for application data
 
