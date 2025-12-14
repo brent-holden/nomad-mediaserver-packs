@@ -20,8 +20,8 @@ This pack deploys [Jellyfin](https://jellyfin.org/) to Nomad, with optional back
 # Deploy with defaults (backup enabled, update enabled)
 nomad-pack run jellyfin --registry=media
 
-# Deploy with GPU transcoding
-nomad-pack run jellyfin --registry=media -var gpu_transcoding=true
+# Deploy without GPU transcoding
+nomad-pack run jellyfin --registry=media -var gpu_transcoding=false
 
 # Deploy without backup job
 nomad-pack run jellyfin --registry=media -var enable_backup=false
@@ -54,7 +54,7 @@ This pack creates up to 3 Nomad jobs:
 | `region` | Nomad region | `global` |
 | `namespace` | Nomad namespace | `default` |
 | `image` | Container image | `docker.io/jellyfin/jellyfin:latest` |
-| `gpu_transcoding` | Enable GPU passthrough | `false` |
+| `gpu_transcoding` | Enable GPU passthrough | `true` |
 | `timezone` | Container timezone | `America/New_York` |
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |

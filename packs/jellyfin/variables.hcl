@@ -31,7 +31,7 @@ variable "image" {
 variable "gpu_transcoding" {
   description = "Enable GPU passthrough for hardware transcoding (requires /dev/dri on host)"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "timezone" {

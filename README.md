@@ -103,7 +103,7 @@ nomad-pack generate var-file plex --registry=media > plex-vars.hcl
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `false` |
+| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |
 | `enable_backup` | Deploy backup job | `true` |
