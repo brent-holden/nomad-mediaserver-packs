@@ -1,4 +1,4 @@
-# Nomad Media Packs
+# Nomad Mediaserver Packs
 
 A Nomad Pack registry for deploying media server applications to HashiCorp Nomad.
 
@@ -26,7 +26,7 @@ Each pack includes:
 ### Add the Registry
 
 ```bash
-nomad-pack registry add media https://github.com/brent-holden/nomad-media-packs
+nomad-pack registry add media https://github.com/brent-holden/nomad-mediaserver-packs
 ```
 
 ### Deploy

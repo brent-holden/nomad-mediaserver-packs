@@ -6,6 +6,6 @@ app {
 pack {
   name        = "plex"
   description = "Plex Media Server - Organize, stream, and share your media collection"
-  url         = "https://github.com/brent-holden/nomad-media-packs"
+  url         = "https://github.com/brent-holden/nomad-mediaserver-packs"
   version     = "1.0.0"
 }
