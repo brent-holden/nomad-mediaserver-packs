@@ -119,6 +119,13 @@ variable "backup_retention_days" {
   default     = 14
 }
 
+# Restore job configuration
+variable "enable_restore" {
+  description = "Enable restore job for Plex configuration (dispatch manually with: nomad job dispatch restore-plex)"
+  type        = bool
+  default     = false
+}
+
 # Update job configuration
 variable "enable_update" {
   description = "Enable periodic job to fetch latest Plex version"
