@@ -27,12 +27,44 @@ Each pack includes:
 
 ## Quick Start
 
-### Option A: Using setup.sh (Recommended)
+### Option A: Full Infrastructure with Ansible (Recommended)
 
-The `setup.sh` script handles everything automatically - creating volumes and deploying the media server.
+The [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) repository provides complete infrastructure automation including Consul, Nomad, CSI plugins, and media server deployment.
 
 ```bash
-# Clone the repository
+# Clone the infrastructure repository
+git clone https://github.com/brent-holden/nomad-mediaserver-infra.git
+cd nomad-mediaserver-infra/ansible
+
+# Configure your settings
+cp group_vars/all.yml.example group_vars/all.yml
+# Edit group_vars/all.yml with your NAS credentials and preferences
+
+# Deploy everything (Consul, Nomad, CSI plugins, volumes, media server)
+ansible-playbook -i inventory.ini site.yml
+
+# Or deploy Jellyfin instead of Plex
+ansible-playbook -i inventory.ini site.yml -e media_server=jellyfin
+```
+
+This option:
+- Installs and configures Consul and Nomad
+- Deploys the CIFS CSI plugin (controller and node)
+- Creates all required volumes (CSI and host)
+- Deploys the media server with backup, update, and restore jobs
+- Provides a restore playbook for disaster recovery
+
+### Option B: Using setup.sh (Existing Nomad Cluster)
+
+If you already have a working Nomad cluster with the CSI plugin deployed, the `setup.sh` script can create volumes and deploy the media server.
+
+**Prerequisites:**
+- Nomad and Consul already running
+- CSI plugin deployed (plugin ID: `cifs`)
+- `nomad` and `nomad-pack` CLI tools installed
+
+```bash
+# Clone this repository
 git clone https://github.com/brent-holden/nomad-mediaserver-packs.git
 cd nomad-mediaserver-packs
 
@@ -51,9 +83,11 @@ export FILESERVER_USERNAME=plex
 ./setup.sh --help            # Show all options
 ```
 
-### Option B: Manual Deployment
+**Note:** This option does NOT install Nomad, Consul, or the CSI plugin. Use Option A for a complete infrastructure setup.
 
-If you prefer to manage volumes separately:
+### Option C: Manual Deployment
+
+For advanced users who want full control over each step:
 
 #### 1. Add the Registry
 
@@ -63,7 +97,7 @@ nomad-pack registry add mediaserver github.com/brent-holden/nomad-mediaserver-pa
 
 #### 2. Create Volumes
 
-See [Volume Requirements](#volume-requirements) for details on creating CSI and host volumes.
+See [Volume Requirements](#volume-requirements) for details on creating CSI and host volumes manually.
 
 #### 3. Deploy
 
@@ -362,7 +396,9 @@ nomad plugin status cifs
 
 ## Setup Script Reference
 
-The `setup.sh` script provides a standalone deployment option that doesn't require Ansible or the nomad-mediaserver-infra repository.
+The `setup.sh` script provides a streamlined deployment for users who already have a working Nomad cluster with the CSI plugin deployed. It handles volume creation and media server deployment without requiring Ansible.
+
+**Important:** This script does NOT install Nomad, Consul, or the CSI plugin. For complete infrastructure setup, use the [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) Ansible playbooks.
 
 ### What It Does
 
