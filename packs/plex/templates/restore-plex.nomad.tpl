@@ -79,7 +79,7 @@ apt-get update -qq && apt-get install -y -qq curl rsync > /dev/null 2>&1
 BACKUP_DIR="/backups/plex"
 PLEX_CONFIG="/plex-config"
 PLEX_MEDIA_SERVER="$PLEX_CONFIG/Library/Application Support/Plex Media Server"
-BACKUP_DATE="${NOMAD_META_backup_date:-}"
+BACKUP_DATE="$${NOMAD_META_backup_date:-}"
 
 # Determine which backup to restore
 if [ -n "$BACKUP_DATE" ]; then
