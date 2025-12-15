@@ -114,6 +114,7 @@ nomad-pack run jellyfin --registry=mediaserver
 
 - Plex: http://your-server:32400
 - Jellyfin: http://your-server:8096
+- Radarr: http://your-server:7878
 
 ## Volume Requirements
 
@@ -168,6 +169,28 @@ Volume examples are available in the [nomad-csi-cifs](https://github.com/brent-h
 The CSI plugin ID is `cifs` by default. This can be changed via the `csi_plugin_id` variable if your plugin uses a different ID.
 
 See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for complete infrastructure setup with Ansible.
+
+### Media Volume Directory Structure
+
+The `media-drive` CSI volume is mounted at `/media` inside containers. The expected directory structure is:
+
+```
+/media
+├── books/                      # Books library (for Readarr)
+├── downloads/
+│   ├── complete/
+│   │   ├── movies/             # Completed movie downloads
+│   │   ├── tv/                 # Completed TV downloads
+│   │   └── other/              # Other completed downloads
+│   └── incomplete/             # Downloads in progress
+├── movies/                     # Movie library (for Radarr)
+└── tv/                         # TV library (for Sonarr)
+```
+
+This structure allows all media services to share a single volume while maintaining organization. Using a single volume for both downloads and media libraries enables **hardlinks** instead of file copies, which:
+- Saves disk space (no duplicate files during seeding)
+- Makes imports instant (no file copy time)
+- Requires downloads and media to be on the same filesystem
 
 ## Configuration
 
