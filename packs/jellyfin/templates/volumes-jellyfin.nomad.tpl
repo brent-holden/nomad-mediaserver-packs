@@ -36,7 +36,7 @@ echo "Registering volumes with Nomad at $NOMAD_ADDR..."
 
 # Register jellyfin-config dynamic host volume
 echo "Creating dynamic host volume: [[ var "config_volume_name" . ]]"
-cat > /tmp/config-volume.json << 'CONFIG_EOF'
+cat > /tmp/config-volume.json << CONFIG_EOF
 {
   "ID": "[[ var "config_volume_name" . ]]",
   "Name": "[[ var "config_volume_name" . ]]",
@@ -62,7 +62,7 @@ curl -sf -X PUT "$NOMAD_ADDR/v1/volume/host/[[ var "config_volume_name" . ]]/cre
 
 # Register jellyfin-cache dynamic host volume
 echo "Creating dynamic host volume: [[ var "cache_volume_name" . ]]"
-cat > /tmp/cache-volume.json << 'CACHE_EOF'
+cat > /tmp/cache-volume.json << CACHE_EOF
 {
   "ID": "[[ var "cache_volume_name" . ]]",
   "Name": "[[ var "cache_volume_name" . ]]",
@@ -90,7 +90,7 @@ curl -sf -X PUT "$NOMAD_ADDR/v1/volume/host/[[ var "cache_volume_name" . ]]/crea
 # Register media CSI volume
 [[- if var "media_volume_source" . ]]
 echo "Registering CSI volume: [[ var "media_volume_name" . ]]"
-cat > /tmp/media-volume.json << 'MEDIA_EOF'
+cat > /tmp/media-volume.json << MEDIA_EOF
 {
   "ID": "[[ var "media_volume_name" . ]]",
   "Name": "[[ var "media_volume_name" . ]]",
@@ -128,7 +128,7 @@ curl -sf -X PUT "$NOMAD_ADDR/v1/volume/csi/[[ var "media_volume_name" . ]]/creat
 # Register backup CSI volume
 [[- if and (var "enable_backup" .) (var "backup_volume_source" .) ]]
 echo "Registering CSI volume: [[ var "backup_volume_name" . ]]"
-cat > /tmp/backup-volume.json << 'BACKUP_EOF'
+cat > /tmp/backup-volume.json << BACKUP_EOF
 {
   "ID": "[[ var "backup_volume_name" . ]]",
   "Name": "[[ var "backup_volume_name" . ]]",
