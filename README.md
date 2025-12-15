@@ -576,41 +576,47 @@ nomad job periodic force plex-backup
 
 ### Restore from Backup
 
-Each pack includes an optional restore job (enable with `-var enable_restore=true`). The restore job is a parameterized batch job that must be dispatched manually:
+Restore jobs are designed to be **ephemeral** - created only when needed and removed after completion. The recommended workflow using Ansible:
 
 ```bash
-# Restore from latest backup
-nomad job dispatch radarr-restore
+# Deploy and restore from latest backup
+ansible-playbook -i inventory.ini playbooks/deploy-media-server.yml -e restore_from_backup=true
 
-# Restore from specific date
+# Deploy and restore from specific date
+ansible-playbook -i inventory.ini playbooks/deploy-arr-stack.yml -e restore_from_backup=true -e backup_date=2025-01-15
+```
+
+The Ansible workflow:
+1. Deploys the pack with `enable_restore=true` (creates restore job only)
+2. Dispatches the restore job
+3. Waits for completion
+4. Redeploys with `enable_restore=false` (removes restore job, starts service)
+
+**Manual restore workflow:**
+
+```bash
+# 1. Deploy restore job only
+nomad-pack run radarr --registry=mediaserver \
+  -var enable_backup=false \
+  -var enable_update=false \
+  -var enable_restore=true
+
+# 2. Dispatch restore
+nomad job dispatch radarr-restore
+# Or from specific date:
 nomad job dispatch -meta backup_date=2025-01-15 radarr-restore
+
+# 3. Wait for completion, then deploy normally (removes restore job)
+nomad-pack run radarr --registry=mediaserver \
+  -var enable_restore=false
 ```
 
-**Important:** Stop the service before restoring, then restart it after:
+**Available restore jobs:**
+- `plex-restore`, `jellyfin-restore`
+- `radarr-restore`, `sonarr-restore`, `lidarr-restore`, `prowlarr-restore`
+- `overseerr-restore`, `tautulli-restore`, `sabnzbd-restore`
 
-```bash
-# Stop the service
-nomad job stop radarr
-
-# Dispatch the restore job
-nomad job dispatch radarr-restore
-
-# Wait for restore to complete, then restart
-nomad-pack run radarr --registry=mediaserver -var enable_restore=true
-```
-
-**Available restore jobs** (when enabled):
-- `plex-restore`
-- `jellyfin-restore`
-- `radarr-restore`
-- `sonarr-restore`
-- `lidarr-restore`
-- `prowlarr-restore`
-- `overseerr-restore`
-- `tautulli-restore`
-- `sabnzbd-restore`
-
-Or use the `restore-media-server.yml` Ansible playbook from [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) which handles this automatically.
+See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for the Ansible playbooks that handle this workflow automatically.
 
 ## Plex Setup
 
