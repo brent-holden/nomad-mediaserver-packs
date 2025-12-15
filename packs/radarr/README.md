@@ -15,13 +15,19 @@ Radarr is a movie collection manager for Usenet and BitTorrent users. It monitor
 
 ## Media Volume Structure
 
-The `media-drive` CSI volume is mounted at `/media` inside the container. Your volume should have the following directory structure:
+The `media-drive` CSI volume is mounted at `/media` inside the container. The expected directory structure is:
 
 ```
 /media
+├── books/                      # Books library (for Readarr)
 ├── downloads/
-│   └── movies/        # Download client puts completed movies here
-└── movies/            # Radarr moves/hardlinks finished movies here
+│   ├── complete/
+│   │   ├── movies/             # Completed movie downloads
+│   │   ├── tv/                 # Completed TV downloads
+│   │   └── other/              # Other completed downloads
+│   └── incomplete/             # Downloads in progress
+├── movies/                     # Movie library (Radarr root folder)
+└── tv/                         # TV library (for Sonarr)
 ```
 
 ### Radarr Configuration
@@ -33,7 +39,7 @@ After deployment, configure these paths in Radarr's UI:
 
 2. **Settings → Download Clients**
    - Configure your download client (e.g., SABnzbd, qBittorrent)
-   - The download client should save completed movies to `/media/downloads/movies`
+   - The download client should save completed movies to `/media/downloads/complete/movies`
 
 ### Why This Structure?
 
