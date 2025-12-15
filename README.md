@@ -13,11 +13,16 @@ Each pack includes:
 
 ## Available Packs
 
-| Pack | Description |
-|------|-------------|
-| `plex` | Plex Media Server |
-| `jellyfin` | Jellyfin Media Server |
-| `radarr` | Radarr - Movie collection manager |
+| Pack | Description | Port |
+|------|-------------|------|
+| `plex` | Plex Media Server | 32400 |
+| `jellyfin` | Jellyfin Media Server | 8096 |
+| `radarr` | Radarr - Movie collection manager | 7878 |
+| `sonarr` | Sonarr - TV series collection manager | 8989 |
+| `lidarr` | Lidarr - Music collection manager | 8686 |
+| `prowlarr` | Prowlarr - Indexer manager | 9696 |
+| `overseerr` | Overseerr - Request management for Plex | 5055 |
+| `tautulli` | Tautulli - Plex monitoring and statistics | 8181 |
 
 ## Prerequisites
 
@@ -115,6 +120,11 @@ nomad-pack run jellyfin --registry=mediaserver
 - Plex: http://your-server:32400
 - Jellyfin: http://your-server:8096
 - Radarr: http://your-server:7878
+- Sonarr: http://your-server:8989
+- Lidarr: http://your-server:8686
+- Prowlarr: http://your-server:9696
+- Overseerr: http://your-server:5055
+- Tautulli: http://your-server:8181
 
 ## Volume Requirements
 
@@ -135,6 +145,11 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Plex | `plex-config` | Configuration, database, and metadata |
 | Jellyfin | `jellyfin-config` | Configuration, database, and metadata |
 | Radarr | `radarr-config` | Configuration and database |
+| Sonarr | `sonarr-config` | Configuration and database |
+| Lidarr | `lidarr-config` | Configuration and database |
+| Prowlarr | `prowlarr-config` | Configuration and database |
+| Overseerr | `overseerr-config` | Configuration and database |
+| Tautulli | `tautulli-config` | Configuration and database |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -360,6 +375,46 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `radarr-backup` | batch/periodic | Daily backup (if enabled) |
 | `radarr-update` | batch/periodic | Daily version check (if enabled) |
 
+### Sonarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `sonarr` | service | Main Sonarr service |
+| `sonarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `sonarr-update` | batch/periodic | Daily version check (if enabled) |
+
+### Lidarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `lidarr` | service | Main Lidarr service |
+| `lidarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `lidarr-update` | batch/periodic | Daily version check (if enabled) |
+
+### Prowlarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `prowlarr` | service | Main Prowlarr service |
+| `prowlarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `prowlarr-update` | batch/periodic | Daily version check (if enabled) |
+
+### Overseerr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `overseerr` | service | Main Overseerr service |
+| `overseerr-backup` | batch/periodic | Daily backup (if enabled) |
+| `overseerr-update` | batch/periodic | Daily version check (if enabled) |
+
+### Tautulli Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `tautulli` | service | Main Tautulli service |
+| `tautulli-backup` | batch/periodic | Daily backup (if enabled) |
+| `tautulli-update` | batch/periodic | Daily version check (if enabled) |
+
 ## Backup and Restore
 
 ### What Gets Backed Up
@@ -367,8 +422,13 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 - **Plex**: `Plug-in Support/Databases/*`, `Preferences.xml`
 - **Jellyfin**: `data/*`, `config/*`
 - **Radarr**: `radarr.db`, `config.xml`, `Backups/*`
+- **Sonarr**: `sonarr.db`, `config.xml`, `Backups/*`
+- **Lidarr**: `lidarr.db`, `config.xml`, `Backups/*`
+- **Prowlarr**: `prowlarr.db`, `config.xml`, `Backups/*`
+- **Overseerr**: `db/db.sqlite3`, `settings.json`
+- **Tautulli**: `tautulli.db`, `config.ini`, `backups/*`
 
-Backups are stored in the backup CSI volume at `/{plex,jellyfin,radarr}/YYYY-MM-DD/`.
+Backups are stored in the backup CSI volume at `/{service}/YYYY-MM-DD/`.
 
 ### Manual Backup
 
