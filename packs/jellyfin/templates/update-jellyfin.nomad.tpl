@@ -45,15 +45,20 @@ echo "Starting Jellyfin version update job..."
 echo "Installing curl, jq, and unzip..."
 apt-get update -qq && apt-get install -y -qq curl jq unzip > /dev/null 2>&1
 
-echo "Fetching latest Jellyfin version from GitHub..."
-JELLYFIN_VERSION=$(curl -s "https://api.github.com/repos/jellyfin/jellyfin/releases/latest" | jq -r '.name')
+# Fetch latest stable container version from Docker Hub
+# LinuxServer tags stable versions as X.X.X (without -nightly suffixes)
+echo "Fetching latest Jellyfin container version from Docker Hub..."
+CONTAINER_VERSION=$(curl -s "https://hub.docker.com/v2/repositories/linuxserver/jellyfin/tags?page_size=100" | \
+    jq -r '.results[].name' | \
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | \
+    head -1)
 
-if [ -z "$JELLYFIN_VERSION" ] || [ "$JELLYFIN_VERSION" = "null" ]; then
-    echo "Error: Failed to extract Jellyfin version from GitHub API response"
+if [ -z "$CONTAINER_VERSION" ]; then
+    echo "Error: Failed to find stable container version from Docker Hub"
     exit 1
 fi
 
-echo "Latest Jellyfin version: $JELLYFIN_VERSION"
+echo "Latest linuxserver/jellyfin container version: $CONTAINER_VERSION"
 
 # Fetch and install latest Nomad CLI
 echo "Fetching latest Nomad version..."
@@ -64,9 +69,9 @@ unzip -q /tmp/nomad.zip -d /tmp/
 chmod +x /tmp/nomad
 
 echo "Writing version to Nomad variable..."
-/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$JELLYFIN_VERSION"
+/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$CONTAINER_VERSION"
 
-echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with version: $JELLYFIN_VERSION"
+echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with container version: $CONTAINER_VERSION"
 EOF
         destination = "local/update-jellyfin-version.sh"
         perms       = "0755"

@@ -39,18 +39,23 @@ job "[[ var "job_name" . ]]-update" {
 #!/bin/sh
 set -e
 
-echo "Fetching latest Tautulli version..."
+echo "Fetching latest Tautulli container version..."
 
 apt-get update -qq && apt-get install -y -qq curl jq unzip > /dev/null 2>&1
 
-VERSION=$(curl -s "https://api.github.com/repos/Tautulli/Tautulli/releases/latest" | jq -r '.tag_name')
+# Fetch latest stable container version from Docker Hub
+# LinuxServer tags stable versions as X.X.X (without -develop suffixes)
+VERSION=$(curl -s "https://hub.docker.com/v2/repositories/linuxserver/tautulli/tags?page_size=100" | \
+    jq -r '.results[].name' | \
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | \
+    head -1)
 
-if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
-    echo "Error: Failed to fetch version"
+if [ -z "$VERSION" ]; then
+    echo "Error: Failed to find stable container version"
     exit 1
 fi
 
-echo "Latest version: $VERSION"
+echo "Latest linuxserver/tautulli container version: $VERSION"
 
 NOMAD_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/nomad | jq -r '.current_version')
 curl -sL "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" -o /tmp/nomad.zip
@@ -59,7 +64,7 @@ chmod +x /tmp/nomad
 
 /tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$VERSION"
 
-echo "Updated Nomad variable with version: $VERSION"
+echo "Updated Nomad variable with container version: $VERSION"
 EOF
         destination = "local/update.sh"
         perms       = "0755"

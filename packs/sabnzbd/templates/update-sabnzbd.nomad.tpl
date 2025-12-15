@@ -45,15 +45,20 @@ echo "Starting SABnzbd version update job..."
 echo "Installing curl, jq, and unzip..."
 apt-get update -qq && apt-get install -y -qq curl jq unzip > /dev/null 2>&1
 
-echo "Fetching latest SABnzbd version from GitHub..."
-SABNZBD_VERSION=$(curl -s "https://api.github.com/repos/sabnzbd/sabnzbd/releases/latest" | jq -r '.tag_name')
+# Fetch latest stable container version from Docker Hub
+# SABnzbd stable versions are on page 2+ due to nightly builds, so fetch 500 results
+echo "Fetching latest SABnzbd container version from Docker Hub..."
+CONTAINER_VERSION=$(curl -s "https://hub.docker.com/v2/repositories/linuxserver/sabnzbd/tags?page_size=500" | \
+    jq -r '.results[].name' | \
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | \
+    head -1)
 
-if [ -z "$SABNZBD_VERSION" ] || [ "$SABNZBD_VERSION" = "null" ]; then
-    echo "Error: Failed to extract SABnzbd version from GitHub API response"
+if [ -z "$CONTAINER_VERSION" ]; then
+    echo "Error: Failed to find stable container version from Docker Hub"
     exit 1
 fi
 
-echo "Latest SABnzbd version: $SABNZBD_VERSION"
+echo "Latest linuxserver/sabnzbd container version: $CONTAINER_VERSION"
 
 # Fetch and install latest Nomad CLI
 echo "Fetching latest Nomad version..."
@@ -64,9 +69,9 @@ unzip -q /tmp/nomad.zip -d /tmp/
 chmod +x /tmp/nomad
 
 echo "Writing version to Nomad variable..."
-/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$SABNZBD_VERSION"
+/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$CONTAINER_VERSION"
 
-echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with version: $SABNZBD_VERSION"
+echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with container version: $CONTAINER_VERSION"
 EOF
         destination = "local/update-sabnzbd-version.sh"
         perms       = "0755"

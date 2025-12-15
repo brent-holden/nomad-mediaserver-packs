@@ -45,15 +45,20 @@ echo "Starting Radarr version update job..."
 echo "Installing curl, jq, and unzip..."
 apt-get update -qq && apt-get install -y -qq curl jq unzip > /dev/null 2>&1
 
-echo "Fetching latest Radarr version from GitHub..."
-RADARR_VERSION=$(curl -s "https://api.github.com/repos/Radarr/Radarr/releases/latest" | jq -r '.tag_name')
+# Fetch latest stable container version from Docker Hub
+# LinuxServer tags stable versions as X.X.X (without -develop, -nightly suffixes)
+echo "Fetching latest Radarr container version from Docker Hub..."
+CONTAINER_VERSION=$(curl -s "https://hub.docker.com/v2/repositories/linuxserver/radarr/tags?page_size=100" | \
+    jq -r '.results[].name' | \
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | \
+    head -1)
 
-if [ -z "$RADARR_VERSION" ] || [ "$RADARR_VERSION" = "null" ]; then
-    echo "Error: Failed to extract Radarr version from GitHub API response"
+if [ -z "$CONTAINER_VERSION" ]; then
+    echo "Error: Failed to find stable container version from Docker Hub"
     exit 1
 fi
 
-echo "Latest Radarr version: $RADARR_VERSION"
+echo "Latest linuxserver/radarr container version: $CONTAINER_VERSION"
 
 # Fetch and install latest Nomad CLI
 echo "Fetching latest Nomad version..."
@@ -64,9 +69,9 @@ unzip -q /tmp/nomad.zip -d /tmp/
 chmod +x /tmp/nomad
 
 echo "Writing version to Nomad variable..."
-/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$RADARR_VERSION"
+/tmp/nomad var put -force [[ var "nomad_variable_path" . ]] version="$CONTAINER_VERSION"
 
-echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with version: $RADARR_VERSION"
+echo "Successfully updated Nomad variable [[ var "nomad_variable_path" . ]] with container version: $CONTAINER_VERSION"
 EOF
         destination = "local/update-radarr-version.sh"
         perms       = "0755"
