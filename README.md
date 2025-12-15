@@ -525,7 +525,7 @@ Each pack includes an optional update job that periodically checks for new conta
 1. **Version Check**: The update job runs on a configurable schedule (default: 3am daily)
 2. **Docker Hub Query**: Queries the Docker Hub API for the latest stable container tag
 3. **Nomad Variable Update**: Stores the version in `nomad/jobs/{service}` with key `version`
-4. **Service Restart**: The main service can be configured to watch the Nomad variable and restart when it changes
+4. **Automatic Restart**: Each service template includes `DOCKER_IMAGE_VERSION` which reads from the Nomad variable. When the version changes, the rendered template changes, triggering Nomad to restart the service and pull the new container image
 
 ### Version Detection
 
@@ -544,6 +544,22 @@ The update jobs detect the latest stable version by querying Docker Hub and filt
 | SABnzbd | linuxserver/sabnzbd | `X.X.X` | `4.4.1` |
 
 **Note:** Plex uses the official Plex API at `plex.tv` to get the latest version, not the linuxserver container image.
+
+### How Automatic Restarts Work
+
+All service templates include a `DOCKER_IMAGE_VERSION` environment variable that reads from the Nomad variable:
+
+```hcl
+template {
+  data = <<EOH
+DOCKER_IMAGE_VERSION={{- with nomadVar "nomad/jobs/radarr" -}}{{ .version }}{{- end }}
+EOH
+  destination = "local/env_vars"
+  env         = true
+}
+```
+
+When the update job writes a new version to the Nomad variable, the rendered template changes. Nomad detects this change and restarts the task, which pulls the latest container image. The services use the `:latest` tag by default, so the version variable acts as a trigger for the restart rather than specifying the exact image tag.
 
 ### Checking Current Version
 
