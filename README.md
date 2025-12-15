@@ -27,13 +27,45 @@ Each pack includes:
 
 ## Quick Start
 
-### 1. Add the Registry
+### Option A: Using setup.sh (Recommended)
+
+The `setup.sh` script handles everything automatically - creating volumes and deploying the media server.
+
+```bash
+# Clone the repository
+git clone https://github.com/brent-holden/nomad-mediaserver-packs.git
+cd nomad-mediaserver-packs
+
+# Set required environment variables
+export NOMAD_ADDR=http://192.168.0.10:4646
+export FILESERVER_PASSWORD=your-smb-password
+
+# Optional: customize fileserver settings
+export FILESERVER_IP=10.100.0.1
+export FILESERVER_USERNAME=plex
+
+# Run setup
+./setup.sh plex              # Deploy Plex
+./setup.sh jellyfin          # Deploy Jellyfin
+./setup.sh plex --no-gpu     # Deploy without GPU transcoding
+./setup.sh --help            # Show all options
+```
+
+### Option B: Manual Deployment
+
+If you prefer to manage volumes separately:
+
+#### 1. Add the Registry
 
 ```bash
 nomad-pack registry add mediaserver github.com/brent-holden/nomad-mediaserver-packs
 ```
 
-### 2. Deploy
+#### 2. Create Volumes
+
+See [Volume Requirements](#volume-requirements) for details on creating CSI and host volumes.
+
+#### 3. Deploy
 
 ```bash
 # Deploy Plex
@@ -43,7 +75,7 @@ nomad-pack run plex --registry=mediaserver
 nomad-pack run jellyfin --registry=mediaserver
 ```
 
-### 3. Access
+### Access
 
 - Plex: http://your-server:32400
 - Jellyfin: http://your-server:8096
