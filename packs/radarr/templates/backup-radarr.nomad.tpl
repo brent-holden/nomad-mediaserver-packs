@@ -29,7 +29,7 @@ job "backup-[[ var "job_name" . ]]" {
     volume "radarr-config" {
       type            = "host"
       source          = "[[ var "config_volume_name" . ]]"
-      access_mode     = "single-node-writer"
+      access_mode     = "single-node-multi-writer"
       attachment_mode = "file-system"
       read_only       = true
     }
