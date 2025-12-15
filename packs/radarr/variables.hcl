@@ -72,15 +72,9 @@ variable "config_volume_name" {
 }
 
 variable "media_volume_name" {
-  description = "The name of the CSI volume for media files (movies)"
+  description = "The name of the CSI volume for media files (movies and downloads)"
   type        = string
   default     = "media-drive"
-}
-
-variable "downloads_volume_name" {
-  description = "The name of the host volume for downloads"
-  type        = string
-  default     = "downloads"
 }
 
 variable "register_consul_service" {

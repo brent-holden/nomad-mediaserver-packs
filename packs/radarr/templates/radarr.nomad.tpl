@@ -21,13 +21,6 @@ job "[[ var "job_name" . ]]" {
       attachment_mode = "file-system"
     }
 
-    volume "downloads" {
-      type            = "host"
-      source          = "[[ var "downloads_volume_name" . ]]"
-      access_mode     = "single-node-writer"
-      attachment_mode = "file-system"
-    }
-
     network {
       mode = "host"
       port "http" {
@@ -57,11 +50,6 @@ job "[[ var "job_name" . ]]" {
       volume_mount {
         volume      = "media-drive"
         destination = "/media"
-      }
-
-      volume_mount {
-        volume      = "downloads"
-        destination = "/downloads"
       }
 
       template {

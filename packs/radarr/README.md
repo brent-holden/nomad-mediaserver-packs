@@ -6,12 +6,11 @@ Radarr is a movie collection manager for Usenet and BitTorrent users. It monitor
 
 ## Prerequisites
 
-1. **Host Volumes** - Configure on your Nomad clients:
+1. **Host Volumes** - Dynamic host volume (created automatically with Nomad 1.10+):
    - `radarr-config` - Persistent configuration storage
-   - `downloads` - Download directory (shared with download clients)
 
 2. **CSI Volumes** - Configure storage:
-   - `media-drive` - Your media library (movies)
+   - `media-drive` - Your media library (movies and downloads)
    - `backup-drive` - Backup storage (if `enable_backup=true`)
 
 ## Usage
@@ -61,8 +60,7 @@ This pack creates up to 3 Nomad jobs:
 | `memory` | Memory allocation (MB) | `1024` |
 | `port` | Radarr port | `7878` |
 | `config_volume_name` | Config host volume | `radarr-config` |
-| `media_volume_name` | CSI volume for media | `media-drive` |
-| `downloads_volume_name` | Downloads host volume | `downloads` |
+| `media_volume_name` | CSI volume for media and downloads | `media-drive` |
 | `register_consul_service` | Register with Consul | `true` |
 | `consul_service_name` | Consul service name | `radarr` |
 

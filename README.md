@@ -134,7 +134,6 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Plex | `plex-config` | Configuration, database, and metadata |
 | Jellyfin | `jellyfin-config` | Configuration, database, and metadata |
 | Radarr | `radarr-config` | Configuration and database |
-| Radarr | `downloads` | Shared download directory |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -228,7 +227,6 @@ nomad-pack info plex --registry=mediaserver
 | `radarr_uid` | UID for Radarr process (PUID) | `1000` |
 | `radarr_gid` | GID for Radarr process (PGID) | `1000` |
 | `port` | Radarr web interface port | `7878` |
-| `downloads_volume_name` | Host volume for downloads | `downloads` |
 
 ### Backup/Update Variables
 
