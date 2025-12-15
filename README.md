@@ -1,6 +1,6 @@
 # Nomad Media Server Packs
 
-Nomad Pack templates for deploying Plex and Jellyfin media servers to HashiCorp Nomad.
+Nomad Pack templates for deploying media servers and related services to HashiCorp Nomad.
 
 ## Features
 
@@ -17,6 +17,7 @@ Each pack includes:
 |------|-------------|
 | `plex` | Plex Media Server |
 | `jellyfin` | Jellyfin Media Server |
+| `radarr` | Radarr - Movie collection manager |
 
 ## Prerequisites
 
@@ -132,6 +133,8 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 |------|--------|---------|
 | Plex | `plex-config` | Configuration, database, and metadata |
 | Jellyfin | `jellyfin-config` | Configuration, database, and metadata |
+| Radarr | `radarr-config` | Configuration and database |
+| Radarr | `downloads` | Shared download directory |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -217,6 +220,15 @@ nomad-pack info plex --registry=mediaserver
 | `jellyfin_gid` | GID for Jellyfin process | `1001` |
 | `http_port` | Jellyfin web interface port | `8096` |
 | `discovery_port` | Jellyfin discovery port | `7359` |
+
+### Radarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `radarr_uid` | UID for Radarr process (PUID) | `1000` |
+| `radarr_gid` | GID for Radarr process (PGID) | `1000` |
+| `port` | Radarr web interface port | `7878` |
+| `downloads_volume_name` | Host volume for downloads | `downloads` |
 
 ### Backup/Update Variables
 
@@ -313,14 +325,23 @@ nomad-pack run plex --registry=mediaserver -f plex-vars.hcl
 | `update-jellyfin` | batch/periodic | Daily version check (if enabled) |
 | `restore-jellyfin` | batch/parameterized | On-demand restore (if enabled) |
 
+### Radarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `radarr` | service | Main Radarr service |
+| `backup-radarr` | batch/periodic | Daily backup (if enabled) |
+| `update-radarr` | batch/periodic | Daily version check (if enabled) |
+
 ## Backup and Restore
 
 ### What Gets Backed Up
 
 - **Plex**: `Plug-in Support/Databases/*`, `Preferences.xml`
 - **Jellyfin**: `data/*`, `config/*`
+- **Radarr**: `radarr.db`, `config.xml`, `Backups/*`
 
-Backups are stored in the backup CSI volume at `/{plex,jellyfin}/YYYY-MM-DD/`.
+Backups are stored in the backup CSI volume at `/{plex,jellyfin,radarr}/YYYY-MM-DD/`.
 
 ### Manual Backup
 
