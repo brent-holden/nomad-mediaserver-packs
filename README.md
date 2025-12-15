@@ -572,18 +572,51 @@ No special setup required. Jellyfin initializes on first run.
 
 For GPU transcoding, ensure `/dev/dri` exists on the host.
 
+## SABnzbd Setup
+
+SABnzbd is a Usenet download client that integrates with Radarr, Sonarr, and Lidarr.
+
+### Initial Configuration
+
+1. Access SABnzbd at `http://your-server:8080`
+2. Complete the setup wizard
+3. Configure your Usenet provider (Config → Servers)
+4. Set up categories for automatic sorting (see below)
+
+### Category Configuration
+
+Configure categories in SABnzbd (Config → Categories) to sort downloads by type:
+
+| Category | Folder | Used By |
+|----------|--------|---------|
+| `movies` | `/media/downloads/complete/movies` | Radarr |
+| `tv` | `/media/downloads/complete/tv` | Sonarr |
+| `music` | `/media/downloads/complete/music` | Lidarr |
+
+### Connecting to *arr Apps
+
+In each *arr app (Settings → Download Clients → Add → SABnzbd):
+
+| Setting | Value |
+|---------|-------|
+| Host | `192.168.0.10` |
+| Port | `8080` |
+| API Key | Found in SABnzbd Config → General → API Key |
+| Category | `movies` / `tv` / `music` (matching the *arr app) |
+
 ## *Arr Stack Setup
 
-The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together as an automated media management stack.
+The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together with SABnzbd as an automated media management stack.
 
 ### Recommended Deployment Order
 
-1. **Prowlarr** - Indexer manager (deploy first, configure indexers)
-2. **Radarr** - Movie management
-3. **Sonarr** - TV series management
-4. **Lidarr** - Music management (optional)
-5. **Overseerr** - Request management (deploy after Radarr/Sonarr)
-6. **Tautulli** - Plex monitoring (deploy after Plex)
+1. **SABnzbd** - Download client (configure Usenet servers)
+2. **Prowlarr** - Indexer manager (configure indexers)
+3. **Radarr** - Movie management (connect to Prowlarr + SABnzbd)
+4. **Sonarr** - TV series management (connect to Prowlarr + SABnzbd)
+5. **Lidarr** - Music management (connect to Prowlarr + SABnzbd)
+6. **Overseerr** - Request management (connect to Plex + Radarr/Sonarr)
+7. **Tautulli** - Plex monitoring (connect to Plex)
 
 ### Service Connections
 
@@ -591,22 +624,32 @@ After deployment, configure the services to communicate:
 
 | Service | Connects To | Configuration Path |
 |---------|-------------|-------------------|
+| SABnzbd | Usenet providers | Config → Servers |
 | Prowlarr | Radarr, Sonarr, Lidarr | Settings → Apps |
-| Radarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
-| Sonarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
-| Lidarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
+| Radarr | Prowlarr, SABnzbd | Settings → Indexers, Settings → Download Clients |
+| Sonarr | Prowlarr, SABnzbd | Settings → Indexers, Settings → Download Clients |
+| Lidarr | Prowlarr, SABnzbd | Settings → Indexers, Settings → Download Clients |
 | Overseerr | Plex, Radarr, Sonarr | Settings → Plex, Settings → Radarr/Sonarr |
 | Tautulli | Plex | Settings → Plex Media Server |
 
 ### Media Path Configuration
 
-All *arr apps mount the media volume at `/media`. Configure root folders as:
+All services mount the media volume at `/media`. Configure paths as:
 
-| Service | Root Folder | Download Path |
-|---------|-------------|---------------|
-| Radarr | `/media/movies` | `/media/downloads/complete/movies` |
-| Sonarr | `/media/tv` | `/media/downloads/complete/tv` |
-| Lidarr | `/media/music` | `/media/downloads/complete/music` |
+| Service | Root/Complete Folder | Incomplete Folder |
+|---------|---------------------|-------------------|
+| SABnzbd | `/media/downloads/complete` | `/media/downloads/incomplete` |
+| Radarr | `/media/movies` | N/A |
+| Sonarr | `/media/tv` | N/A |
+| Lidarr | `/media/music` | N/A |
+
+**Download Client Paths in *arr Apps:**
+
+| Service | Download Path Setting |
+|---------|----------------------|
+| Radarr | `/media/downloads/complete/movies` |
+| Sonarr | `/media/downloads/complete/tv` |
+| Lidarr | `/media/downloads/complete/music` |
 
 ### API Keys
 
