@@ -135,6 +135,23 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
+### CSI Plugin
+
+The CSI SMB/CIFS plugin must be deployed before registering volumes. Example job files are provided in `examples/`:
+
+```bash
+# Deploy the CSI plugin (controller and node)
+nomad job run examples/cifs-csi-plugin-controller.nomad
+nomad job run examples/cifs-csi-plugin-node.nomad
+
+# Verify plugin is healthy
+nomad plugin status cifs
+```
+
+**Recommended image:** `registry.k8s.io/sig-storage/smbplugin:v1.19.1`
+
+This is the Kubernetes SIG Storage SMB CSI driver, which provides reliable SMB/CIFS volume mounting for Nomad.
+
 ### CSI Volumes
 
 CSI volumes provide access to network storage (SMB/CIFS shares):
@@ -144,9 +161,11 @@ CSI volumes provide access to network storage (SMB/CIFS shares):
 | `media-drive` | Media library (movies, TV, music) | Yes |
 | `backup-drive` | Backup storage | If `enable_backup=true` |
 
+Example volume definitions are in `examples/media-drive-volume.hcl` and `examples/backup-drive-volume.hcl`.
+
 The CSI plugin ID is `cifs` by default. This can be changed via the `csi_plugin_id` variable if your plugin uses a different ID.
 
-See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for complete CSI plugin setup.
+See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for complete infrastructure setup with Ansible.
 
 ## Configuration
 
