@@ -13,6 +13,37 @@ Radarr is a movie collection manager for Usenet and BitTorrent users. It monitor
    - `media-drive` - Your media library (movies and downloads)
    - `backup-drive` - Backup storage (if `enable_backup=true`)
 
+## Media Volume Structure
+
+The `media-drive` CSI volume is mounted at `/media` inside the container. Your volume should have the following directory structure:
+
+```
+/media
+├── downloads/
+│   └── movies/        # Download client puts completed movies here
+└── movies/            # Radarr moves/hardlinks finished movies here
+```
+
+### Radarr Configuration
+
+After deployment, configure these paths in Radarr's UI:
+
+1. **Settings → Media Management → Root Folders**
+   - Add `/media/movies` as the root folder for your movie library
+
+2. **Settings → Download Clients**
+   - Configure your download client (e.g., SABnzbd, qBittorrent)
+   - The download client should save completed movies to `/media/downloads/movies`
+
+### Why This Structure?
+
+Using a single volume with subdirectories for both downloads and media allows Radarr to use **hardlinks** instead of copying files. This:
+- Saves disk space (no duplicate files during seeding)
+- Makes imports instant (no file copy time)
+- Requires downloads and media to be on the same filesystem
+
+If your download client runs in a separate container, ensure it also mounts the same `media-drive` CSI volume.
+
 ## Usage
 
 ```bash
