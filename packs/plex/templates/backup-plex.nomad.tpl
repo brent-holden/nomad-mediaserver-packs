@@ -1,5 +1,5 @@
 [[- if var "enable_backup" . ]]
-job "backup-[[ var "job_name" . ]]" {
+job "[[ var "job_name" . ]]-backup" {
   region      = "[[ var "region" . ]]"
   datacenters = [[ var "datacenters" . | toJson ]]
   namespace   = "[[ var "namespace" . ]]"

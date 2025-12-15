@@ -1,5 +1,5 @@
 [[- if var "enable_restore" . ]]
-job "restore-[[ var "job_name" . ]]" {
+job "[[ var "job_name" . ]]-restore" {
   region      = "[[ var "region" . ]]"
   datacenters = [[ var "datacenters" . | toJson ]]
   namespace   = "[[ var "namespace" . ]]"

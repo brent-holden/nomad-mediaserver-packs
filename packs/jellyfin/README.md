@@ -40,8 +40,8 @@ This pack creates up to 3 Nomad jobs:
 | Job | Description | Controlled By |
 |-----|-------------|---------------|
 | `jellyfin` | Main Jellyfin service | Always created |
-| `backup-jellyfin` | Periodic backup of Jellyfin config | `enable_backup` |
-| `update-jellyfin` | Periodic version check | `enable_update` |
+| `jellyfin-backup` | Periodic backup of Jellyfin config | `enable_backup` |
+| `jellyfin-update` | Periodic version check | `enable_update` |
 
 ## Variables
 

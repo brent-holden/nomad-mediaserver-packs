@@ -76,8 +76,8 @@ This pack creates up to 3 Nomad jobs:
 | Job | Description | Controlled By |
 |-----|-------------|---------------|
 | `radarr` | Main Radarr service | Always created |
-| `backup-radarr` | Periodic backup of Radarr config | `enable_backup` |
-| `update-radarr` | Periodic version check | `enable_update` |
+| `radarr-backup` | Periodic backup of Radarr config | `enable_backup` |
+| `radarr-update` | Periodic version check | `enable_update` |
 
 ## Variables
 

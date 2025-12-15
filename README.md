@@ -333,26 +333,26 @@ nomad-pack run plex --registry=mediaserver -f plex-vars.hcl
 | Job | Type | Description |
 |-----|------|-------------|
 | `plex` | service | Main Plex Media Server |
-| `backup-plex` | batch/periodic | Daily backup (if enabled) |
-| `update-plex` | batch/periodic | Daily version check (if enabled) |
-| `restore-plex` | batch/parameterized | On-demand restore (if enabled) |
+| `plex-backup` | batch/periodic | Daily backup (if enabled) |
+| `plex-update` | batch/periodic | Daily version check (if enabled) |
+| `plex-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Jellyfin Pack
 
 | Job | Type | Description |
 |-----|------|-------------|
 | `jellyfin` | service | Main Jellyfin server |
-| `backup-jellyfin` | batch/periodic | Daily backup (if enabled) |
-| `update-jellyfin` | batch/periodic | Daily version check (if enabled) |
-| `restore-jellyfin` | batch/parameterized | On-demand restore (if enabled) |
+| `jellyfin-backup` | batch/periodic | Daily backup (if enabled) |
+| `jellyfin-update` | batch/periodic | Daily version check (if enabled) |
+| `jellyfin-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Radarr Pack
 
 | Job | Type | Description |
 |-----|------|-------------|
 | `radarr` | service | Main Radarr service |
-| `backup-radarr` | batch/periodic | Daily backup (if enabled) |
-| `update-radarr` | batch/periodic | Daily version check (if enabled) |
+| `radarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `radarr-update` | batch/periodic | Daily version check (if enabled) |
 
 ## Backup and Restore
 
@@ -369,7 +369,7 @@ Backups are stored in the backup CSI volume at `/{plex,jellyfin,radarr}/YYYY-MM-
 Backups run automatically at 2am. To trigger manually:
 
 ```bash
-nomad job periodic force backup-plex
+nomad job periodic force plex-backup
 ```
 
 ### Restore from Backup
@@ -378,10 +378,10 @@ The restore job is a parameterized batch job that must be dispatched manually:
 
 ```bash
 # Restore from latest backup
-nomad job dispatch restore-plex
+nomad job dispatch plex-restore
 
 # Restore from specific date
-nomad job dispatch -meta backup_date=2025-01-15 restore-plex
+nomad job dispatch -meta backup_date=2025-01-15 plex-restore
 ```
 
 **Important:** Stop the media server before restoring, then restart it after:
@@ -391,7 +391,7 @@ nomad job dispatch -meta backup_date=2025-01-15 restore-plex
 nomad job stop plex
 
 # Restore
-nomad job dispatch restore-plex
+nomad job dispatch plex-restore
 
 # Wait for restore to complete, then restart
 nomad-pack run plex --registry=mediaserver -var enable_restore=true
@@ -448,7 +448,7 @@ nomad volume status -type host
 ### View Backup Logs
 
 ```bash
-nomad alloc logs -job backup-plex
+nomad alloc logs -job plex-backup
 ```
 
 ### CSI Plugin Issues

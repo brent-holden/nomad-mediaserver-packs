@@ -46,8 +46,8 @@ This pack creates up to 3 Nomad jobs:
 | Job | Description | Controlled By |
 |-----|-------------|---------------|
 | `plex` | Main Plex Media Server service | Always created |
-| `backup-plex` | Periodic backup of Plex config | `enable_backup` |
-| `update-plex` | Periodic version check | `enable_update` |
+| `plex-backup` | Periodic backup of Plex config | `enable_backup` |
+| `plex-update` | Periodic version check | `enable_update` |
 
 ## Variables
 

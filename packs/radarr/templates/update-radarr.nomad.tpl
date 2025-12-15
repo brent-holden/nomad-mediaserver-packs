@@ -1,5 +1,5 @@
 [[- if var "enable_update" . ]]
-job "update-[[ var "job_name" . ]]" {
+job "[[ var "job_name" . ]]-update" {
   region      = "[[ var "region" . ]]"
   datacenters = [[ var "datacenters" . | toJson ]]
   namespace   = "[[ var "namespace" . ]]"
