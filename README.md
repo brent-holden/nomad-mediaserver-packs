@@ -422,7 +422,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 - `{service}` - Main service job
 - `{service}-backup` - Periodic backup job
 - `{service}-update` - Periodic version check job
-- `{service}-restore` - On-demand restore job (Plex/Jellyfin only)
+- `{service}-restore` - On-demand restore job (if enabled)
 
 ### Plex Pack
 
@@ -449,6 +449,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `radarr` | service | Main Radarr service |
 | `radarr-backup` | batch/periodic | Daily backup (if enabled) |
 | `radarr-update` | batch/periodic | Daily version check (if enabled) |
+| `radarr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Sonarr Pack
 
@@ -457,6 +458,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `sonarr` | service | Main Sonarr service |
 | `sonarr-backup` | batch/periodic | Daily backup (if enabled) |
 | `sonarr-update` | batch/periodic | Daily version check (if enabled) |
+| `sonarr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Lidarr Pack
 
@@ -465,6 +467,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `lidarr` | service | Main Lidarr service |
 | `lidarr-backup` | batch/periodic | Daily backup (if enabled) |
 | `lidarr-update` | batch/periodic | Daily version check (if enabled) |
+| `lidarr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Prowlarr Pack
 
@@ -473,6 +476,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `prowlarr` | service | Main Prowlarr service |
 | `prowlarr-backup` | batch/periodic | Daily backup (if enabled) |
 | `prowlarr-update` | batch/periodic | Daily version check (if enabled) |
+| `prowlarr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Overseerr Pack
 
@@ -481,6 +485,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `overseerr` | service | Main Overseerr service |
 | `overseerr-backup` | batch/periodic | Daily backup (if enabled) |
 | `overseerr-update` | batch/periodic | Daily version check (if enabled) |
+| `overseerr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### Tautulli Pack
 
@@ -489,6 +494,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `tautulli` | service | Main Tautulli service |
 | `tautulli-backup` | batch/periodic | Daily backup (if enabled) |
 | `tautulli-update` | batch/periodic | Daily version check (if enabled) |
+| `tautulli-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ### SABnzbd Pack
 
@@ -497,6 +503,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `sabnzbd` | service | Main SABnzbd service |
 | `sabnzbd-backup` | batch/periodic | Daily backup (if enabled) |
 | `sabnzbd-update` | batch/periodic | Daily version check (if enabled) |
+| `sabnzbd-restore` | batch/parameterized | On-demand restore (if enabled) |
 
 ## Automatic Updates
 
@@ -569,28 +576,39 @@ nomad job periodic force plex-backup
 
 ### Restore from Backup
 
-The restore job is a parameterized batch job that must be dispatched manually:
+Each pack includes an optional restore job (enable with `-var enable_restore=true`). The restore job is a parameterized batch job that must be dispatched manually:
 
 ```bash
 # Restore from latest backup
-nomad job dispatch plex-restore
+nomad job dispatch radarr-restore
 
 # Restore from specific date
-nomad job dispatch -meta backup_date=2025-01-15 plex-restore
+nomad job dispatch -meta backup_date=2025-01-15 radarr-restore
 ```
 
-**Important:** Stop the media server before restoring, then restart it after:
+**Important:** Stop the service before restoring, then restart it after:
 
 ```bash
-# Stop
-nomad job stop plex
+# Stop the service
+nomad job stop radarr
 
-# Restore
-nomad job dispatch plex-restore
+# Dispatch the restore job
+nomad job dispatch radarr-restore
 
 # Wait for restore to complete, then restart
-nomad-pack run plex --registry=mediaserver -var enable_restore=true
+nomad-pack run radarr --registry=mediaserver -var enable_restore=true
 ```
+
+**Available restore jobs** (when enabled):
+- `plex-restore`
+- `jellyfin-restore`
+- `radarr-restore`
+- `sonarr-restore`
+- `lidarr-restore`
+- `prowlarr-restore`
+- `overseerr-restore`
+- `tautulli-restore`
+- `sabnzbd-restore`
 
 Or use the `restore-media-server.yml` Ansible playbook from [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) which handles this automatically.
 

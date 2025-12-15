@@ -106,6 +106,12 @@ variable "backup_retention_days" {
   default     = 14
 }
 
+variable "enable_restore" {
+  description = "Enable parameterized restore job for Overseerr configuration"
+  type        = bool
+  default     = false
+}
+
 variable "enable_update" {
   description = "Enable periodic job to fetch latest Overseerr version"
   type        = bool

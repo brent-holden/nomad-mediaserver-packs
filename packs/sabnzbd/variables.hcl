@@ -114,6 +114,13 @@ variable "backup_retention_days" {
   default     = 14
 }
 
+# Restore job configuration
+variable "enable_restore" {
+  description = "Enable parameterized restore job for SABnzbd configuration"
+  type        = bool
+  default     = false
+}
+
 # Update job configuration
 variable "enable_update" {
   description = "Enable periodic job to fetch latest SABnzbd version"
