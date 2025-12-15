@@ -328,6 +328,12 @@ nomad-pack run plex --registry=mediaserver -f plex-vars.hcl
 
 ## Jobs Created
 
+Each pack creates multiple Nomad jobs following the naming convention `{service}-{type}`:
+- `{service}` - Main service job
+- `{service}-backup` - Periodic backup job
+- `{service}-update` - Periodic version check job
+- `{service}-restore` - On-demand restore job (Plex/Jellyfin only)
+
 ### Plex Pack
 
 | Job | Type | Description |
