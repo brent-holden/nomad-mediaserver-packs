@@ -137,20 +137,20 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 
 ### CSI Plugin
 
-The CSI SMB/CIFS plugin must be deployed before registering volumes. Example job files are provided in `examples/`:
+The CSI SMB/CIFS plugin must be deployed before registering volumes. See [nomad-csi-cifs](https://github.com/brent-holden/nomad-csi-cifs) for plugin deployment and volume configuration.
 
 ```bash
-# Deploy the CSI plugin (controller and node)
-nomad job run examples/cifs-csi-plugin-controller.nomad
-nomad job run examples/cifs-csi-plugin-node.nomad
+# Clone the CSI repo
+git clone https://github.com/brent-holden/nomad-csi-cifs.git
+cd nomad-csi-cifs
+
+# Deploy the CSI plugin
+nomad job run jobs/csi-controller.nomad
+nomad job run jobs/csi-node.nomad
 
 # Verify plugin is healthy
 nomad plugin status cifs
 ```
-
-**Recommended image:** `registry.k8s.io/sig-storage/smbplugin:v1.19.1`
-
-This is the Kubernetes SIG Storage SMB CSI driver, which provides reliable SMB/CIFS volume mounting for Nomad.
 
 ### CSI Volumes
 
@@ -161,7 +161,7 @@ CSI volumes provide access to network storage (SMB/CIFS shares):
 | `media-drive` | Media library (movies, TV, music) | Yes |
 | `backup-drive` | Backup storage | If `enable_backup=true` |
 
-Example volume definitions are in `examples/media-drive-volume.hcl` and `examples/backup-drive-volume.hcl`.
+Volume examples are available in the [nomad-csi-cifs](https://github.com/brent-holden/nomad-csi-cifs) repository.
 
 The CSI plugin ID is `cifs` by default. This can be changed via the `csi_plugin_id` variable if your plugin uses a different ID.
 
@@ -503,6 +503,7 @@ Before running `setup.sh`, ensure:
 ## Related Repositories
 
 - [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) - Ansible playbooks for complete infrastructure deployment including CSI plugins, volumes, and automated restore
+- [nomad-csi-cifs](https://github.com/brent-holden/nomad-csi-cifs) - Standalone CSI CIFS/SMB plugin deployment and volume configurations
 
 ## License
 
