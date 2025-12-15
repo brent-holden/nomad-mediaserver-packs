@@ -76,6 +76,8 @@ CSI volumes provide access to network storage (SMB/CIFS shares):
 | `media-drive` | Media library (movies, TV, music) | Yes |
 | `backup-drive` | Backup storage | If `enable_backup=true` |
 
+The CSI plugin ID is `cifs` by default. This can be changed via the `csi_plugin_id` variable if your plugin uses a different ID.
+
 See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for complete CSI plugin setup.
 
 ## Configuration
@@ -144,6 +146,17 @@ nomad-pack info plex --registry=mediaserver
 |----------|-------------|---------|
 | `config_volume_name` | Host volume for config | `plex-config` / `jellyfin-config` |
 | `media_volume_name` | CSI volume for media | `media-drive` |
+
+### CSI Plugin Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `csi_plugin_id` | CSI plugin ID for volumes | `cifs` |
+| `deploy_csi_volumes` | Deploy CSI volumes with pack | `false` |
+| `csi_volume_username` | Username for CIFS/SMB auth | `plex` / `jellyfin` |
+| `csi_volume_password` | Password for CIFS/SMB auth | `""` |
+| `media_volume_source` | CIFS/SMB path for media | `//10.100.0.1/media` |
+| `backup_volume_source` | CIFS/SMB path for backups | `//10.100.0.1/backups` |
 
 ## Deployment Examples
 
