@@ -1,279 +1,284 @@
-# Nomad Mediaserver Packs
+# Nomad Media Server Packs
 
-A Nomad Pack registry for deploying media server applications to HashiCorp Nomad.
+Nomad Pack templates for deploying Plex and Jellyfin media servers to HashiCorp Nomad.
+
+## Features
+
+Each pack includes:
+
+- **Main service** - Media server with GPU transcoding support
+- **Backup job** - Periodic backup of configuration to network storage
+- **Update job** - Periodic version check and Nomad variable updates
+- **Restore job** - On-demand restore from backups
 
 ## Available Packs
 
 | Pack | Description |
 |------|-------------|
-| `plex` | Plex Media Server with optional GPU transcoding, backup, and update jobs |
-| `jellyfin` | Jellyfin Media Server with optional GPU transcoding, backup, and update jobs |
-
-Each pack includes:
-- **Main service** - The media server itself
-- **Backup job** - Periodic backup of configuration (enabled by default)
-- **Update job** - Periodic version check (enabled by default)
+| `plex` | Plex Media Server |
+| `jellyfin` | Jellyfin Media Server |
 
 ## Prerequisites
 
-- [Nomad](https://developer.hashicorp.com/nomad/install) cluster running
-- [Nomad Pack](https://developer.hashicorp.com/nomad/docs/tools/nomad-pack) installed (v0.1.0+ with v2 template parser)
-- [Host volumes](#host-volumes-required) configured for application data
-- [CSI volumes](#csi-volumes) configured for media storage (SMB/CIFS recommended)
+- [Nomad 1.10+](https://developer.hashicorp.com/nomad/install) - Required for dynamic host volumes
+- [Nomad Pack](https://developer.hashicorp.com/nomad/docs/tools/nomad-pack) - v0.1.0+ with v2 template parser
+- [CSI volumes](#csi-volumes) - For media and backup storage
+- [Podman driver](https://github.com/hashicorp/nomad-driver-podman) - Container runtime
 
-## Volume Setup
+## Quick Start
 
-Before deploying packs, you must configure both host volumes (for local configuration storage) and CSI volumes (for shared media storage).
-
-### Host Volumes (Required)
-
-Host volumes provide persistent local storage for application configuration. These must be configured on each Nomad client that will run the media server.
-
-#### 1. Create the directories
-
-**For Plex:**
-```bash
-sudo mkdir -p /opt/nomad/volumes/plex-config
-sudo mkdir -p /opt/nomad/volumes/plex-transcode
-sudo chown -R 1002:1001 /opt/nomad/volumes/plex-config
-sudo chown -R 1002:1001 /opt/nomad/volumes/plex-transcode
-```
-
-**For Jellyfin:**
-```bash
-sudo mkdir -p /opt/nomad/volumes/jellyfin-config
-sudo mkdir -p /opt/nomad/volumes/jellyfin-cache
-sudo chown -R 1002:1001 /opt/nomad/volumes/jellyfin-config
-sudo chown -R 1002:1001 /opt/nomad/volumes/jellyfin-cache
-```
-
-#### 2. Configure Nomad client
-
-Add host volumes to your Nomad client configuration (e.g., `/etc/nomad.d/client.hcl`):
-
-**For Plex:**
-```hcl
-client {
-  host_volume "plex-config" {
-    path      = "/opt/nomad/volumes/plex-config"
-    read_only = false
-  }
-
-  host_volume "plex-transcode" {
-    path      = "/opt/nomad/volumes/plex-transcode"
-    read_only = false
-  }
-}
-```
-
-**For Jellyfin:**
-```hcl
-client {
-  host_volume "jellyfin-config" {
-    path      = "/opt/nomad/volumes/jellyfin-config"
-    read_only = false
-  }
-
-  host_volume "jellyfin-cache" {
-    path      = "/opt/nomad/volumes/jellyfin-cache"
-    read_only = false
-  }
-}
-```
-
-See `examples/nomad-client-volumes.hcl` for a complete example.
-
-#### 3. Restart Nomad client
+### 1. Add the Registry
 
 ```bash
-sudo systemctl restart nomad
+nomad-pack registry add mediaserver github.com/brent-holden/nomad-mediaserver-packs
 ```
 
-#### Host Volume Summary
-
-| Pack | Volume | Default Name | Purpose |
-|------|--------|--------------|---------|
-| Plex | Config | `plex-config` | Plex configuration, database, and metadata |
-| Plex | Transcode | `plex-transcode` | Temporary transcoding files |
-| Jellyfin | Config | `jellyfin-config` | Jellyfin configuration, database, and metadata |
-| Jellyfin | Cache | `jellyfin-cache` | Cache and transcoding files |
-
-### CSI Volumes
-
-These packs expect CSI volumes for shared storage. A CIFS/SMB CSI plugin is recommended for NAS-based media libraries.
-
-#### Option A: Deploy CSI volumes with the pack
-
-Set `deploy_csi_volumes=true` when running the pack:
+### 2. Deploy
 
 ```bash
-nomad-pack run plex --registry=mediaserver \
-  -var deploy_csi_volumes=true \
-  -var csi_volume_password=your-password
-```
-
-#### Option B: Register CSI volumes manually
-
-1. **Install a CSI plugin** - See [nomad-media-infra](https://github.com/brent-holden/nomad-media-infra) for complete CSI setup including:
-   - CSI controller and node plugin job specifications
-   - Ansible playbooks for automated deployment
-   - Volume registration templates
-
-2. **Register CSI volumes:**
-   ```bash
-   # Edit examples/media-drive-volume.hcl with your fileserver details
-   nomad volume register examples/media-drive-volume.hcl
-
-   # If using backups, also register the backup volume
-   nomad volume register examples/backup-drive-volume.hcl
-   ```
-
-   **Important:** For CIFS/SMB backup volumes, include `cache=none` and `nobrl` in the mount flags to ensure rsync operations work correctly:
-   ```hcl
-   mount_flags = ["uid=1002", "gid=1001", "file_mode=0644", "dir_mode=0755", "vers=3.0", "cache=none", "nobrl"]
-   ```
-
-#### CSI Volume Summary
-
-| Volume | Default Name | Purpose | Required |
-|--------|--------------|---------|----------|
-| Media | `media-drive` | Shared media library (NAS mount) | Yes |
-| Backup | `backup-drive` | Backup storage location | Only if `enable_backup=true` |
-
-## Install
-
-### Add the Registry
-
-```bash
-nomad-pack registry add mediaserver https://github.com/brent-holden/nomad-mediaserver-packs
-```
-
-### Deploy
-
-```bash
+# Deploy Plex
 nomad-pack run plex --registry=mediaserver
-```
 
-or
-
-```bash
+# Or deploy Jellyfin
 nomad-pack run jellyfin --registry=mediaserver
 ```
 
-By default, packs deploy with GPU transcoding, backup jobs, and update jobs enabled.
+### 3. Access
+
+- Plex: http://your-server:32400
+- Jellyfin: http://your-server:8096
+
+## Volume Requirements
+
+### Dynamic Host Volumes
+
+These packs use Nomad's dynamic host volumes (requires Nomad 1.10+). The Nomad client must be configured with:
+
+```hcl
+client {
+  host_volumes_dir = "/opt/nomad/volumes"
+}
+```
+
+The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) creates the host volumes automatically using the `mkdir` plugin:
+
+| Pack | Volume | Purpose |
+|------|--------|---------|
+| Plex | `plex-config` | Configuration, database, and metadata |
+| Jellyfin | `jellyfin-config` | Configuration, database, and metadata |
+
+### CSI Volumes
+
+CSI volumes provide access to network storage (SMB/CIFS shares):
+
+| Volume | Purpose | Required |
+|--------|---------|----------|
+| `media-drive` | Media library (movies, TV, music) | Yes |
+| `backup-drive` | Backup storage | If `enable_backup=true` |
+
+See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for complete CSI plugin setup.
 
 ## Configuration
 
-### Optional Flags
-
-Disable features using `-var` flags:
-
-```bash
-# Disable GPU transcoding
-nomad-pack run plex --registry=mediaserver -var gpu_transcoding=false
-
-# Disable backup job
-nomad-pack run plex --registry=mediaserver -var enable_backup=false
-
-# Disable update job
-nomad-pack run plex --registry=mediaserver -var enable_update=false
-
-# Disable multiple features
-nomad-pack run jellyfin --registry=mediaserver -var enable_backup=false -var enable_update=false
-
-# Use a custom variables file
-nomad-pack run plex --registry=mediaserver -f my-plex-vars.hcl
-```
-
-Each pack has configurable variables. View available variables:
+### View Available Variables
 
 ```bash
 nomad-pack info plex --registry=mediaserver
-```
-
-Generate a variables file:
-
-```bash
-nomad-pack generate var-file plex --registry=mediaserver > plex-vars.hcl
 ```
 
 ### Common Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `job_name` | Name of the main job | `plex` / `jellyfin` |
 | `datacenters` | List of eligible datacenters | `["dc1"]` |
 | `region` | Nomad region | `global` |
 | `namespace` | Nomad namespace | `default` |
 | `timezone` | Timezone for schedules | `America/New_York` |
 
-### Plex Variables
+### Feature Toggles
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
-| `plex_uid` | UID for Plex user | `1002` |
-| `plex_gid` | GID for Plex group | `1001` |
+| `gpu_transcoding` | Enable GPU passthrough (`/dev/dri`) | `true` |
+| `enable_backup` | Deploy periodic backup job | `true` |
+| `enable_update` | Deploy periodic update job | `true` |
+| `enable_restore` | Deploy parameterized restore job | `false` |
+
+### Resource Allocation
+
+| Variable | Description | Default |
+|----------|-------------|---------|
 | `cpu` | CPU allocation (MHz) | `16000` |
 | `memory` | Memory allocation (MB) | `16384` |
-| `enable_backup` | Deploy backup job | `true` |
-| `enable_update` | Deploy update job | `true` |
-| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
-| `update_cron_schedule` | Update schedule | `0 3 * * *` |
-| `backup_retention_days` | Days to keep backups | `14` |
 
-### Jellyfin Variables
+### Plex-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `gpu_transcoding` | Enable GPU passthrough for hardware transcoding | `true` |
-| `jellyfin_uid` | UID for Jellyfin user | `1002` |
-| `jellyfin_gid` | GID for Jellyfin group | `1001` |
-| `cpu` | CPU allocation (MHz) | `16000` |
-| `memory` | Memory allocation (MB) | `16384` |
-| `enable_backup` | Deploy backup job | `true` |
-| `enable_update` | Deploy update job | `true` |
-| `backup_cron_schedule` | Backup schedule | `0 2 * * *` |
-| `update_cron_schedule` | Update schedule | `0 3 * * *` |
-| `backup_retention_days` | Days to keep backups | `14` |
+| `plex_uid` | UID for Plex process | `1002` |
+| `plex_gid` | GID for Plex process | `1001` |
+| `port` | Plex web interface port | `32400` |
 
-### CSI Volume Variables
-
-Optionally deploy CSI volumes as part of the pack (disabled by default):
+### Jellyfin-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `deploy_csi_volumes` | Deploy CSI volumes for media and backup storage | `false` |
-| `csi_plugin_id` | CSI plugin ID to use | `smb` |
-| `csi_volume_username` | Username for CIFS/SMB authentication | `plex`/`jellyfin` |
-| `csi_volume_password` | Password for CIFS/SMB authentication | `""` |
-| `media_volume_source` | CIFS/SMB source path for media | `//10.100.0.1/media` |
-| `backup_volume_source` | CIFS/SMB source path for backups | `//10.100.0.1/backups` |
+| `jellyfin_uid` | UID for Jellyfin process | `1002` |
+| `jellyfin_gid` | GID for Jellyfin process | `1001` |
+| `http_port` | Jellyfin web interface port | `8096` |
+| `discovery_port` | Jellyfin discovery port | `7359` |
 
-Example deploying with CSI volumes:
+### Backup/Update Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `backup_cron_schedule` | Backup schedule (cron format) | `0 2 * * *` (2am daily) |
+| `update_cron_schedule` | Update check schedule | `0 3 * * *` (3am daily) |
+| `backup_retention_days` | Days to keep backups | `14` |
+| `backup_volume_name` | CSI volume for backups | `backup-drive` |
+
+### Volume Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `config_volume_name` | Host volume for config | `plex-config` / `jellyfin-config` |
+| `media_volume_name` | CSI volume for media | `media-drive` |
+
+## Deployment Examples
+
+### Basic Deployment
+
+```bash
+nomad-pack run plex --registry=mediaserver
+```
+
+### Without GPU Transcoding
+
+```bash
+nomad-pack run plex --registry=mediaserver -var gpu_transcoding=false
+```
+
+### With Restore Job Enabled
+
+```bash
+nomad-pack run plex --registry=mediaserver -var enable_restore=true
+```
+
+### Minimal Deployment (No Extra Jobs)
 
 ```bash
 nomad-pack run plex --registry=mediaserver \
-  -var deploy_csi_volumes=true \
-  -var csi_volume_password=secret
+  -var enable_backup=false \
+  -var enable_update=false
 ```
 
-## Application Setup
+### Custom Resources
 
-### Plex
+```bash
+nomad-pack run jellyfin --registry=mediaserver \
+  -var cpu=8000 \
+  -var memory=8192
+```
 
-1. Set up Nomad variables for Plex claim token:
-   ```bash
-   nomad var put nomad/jobs/plex claim_token="<YOUR-CLAIM-TOKEN>" version="latest"
-   ```
-   Get your claim token from [plex.tv/claim](https://www.plex.tv/claim/).
+### Using a Variables File
 
-2. (Optional) For GPU transcoding, ensure `/dev/dri` exists on the host.
+```bash
+# Generate template
+nomad-pack generate var-file plex --registry=mediaserver > plex-vars.hcl
 
-### Jellyfin
+# Edit plex-vars.hcl with your settings
 
-1. (Optional) For GPU transcoding (enabled by default), ensure `/dev/dri` exists on the host.
+# Deploy with file
+nomad-pack run plex --registry=mediaserver -f plex-vars.hcl
+```
 
-No additional setup required. Jellyfin will initialize on first run.
+## Jobs Created
+
+### Plex Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `plex` | service | Main Plex Media Server |
+| `backup-plex` | batch/periodic | Daily backup (if enabled) |
+| `update-plex` | batch/periodic | Daily version check (if enabled) |
+| `restore-plex` | batch/parameterized | On-demand restore (if enabled) |
+
+### Jellyfin Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `jellyfin` | service | Main Jellyfin server |
+| `backup-jellyfin` | batch/periodic | Daily backup (if enabled) |
+| `update-jellyfin` | batch/periodic | Daily version check (if enabled) |
+| `restore-jellyfin` | batch/parameterized | On-demand restore (if enabled) |
+
+## Backup and Restore
+
+### What Gets Backed Up
+
+- **Plex**: `Plug-in Support/Databases/*`, `Preferences.xml`
+- **Jellyfin**: `data/*`, `config/*`
+
+Backups are stored in the backup CSI volume at `/{plex,jellyfin}/YYYY-MM-DD/`.
+
+### Manual Backup
+
+Backups run automatically at 2am. To trigger manually:
+
+```bash
+nomad job periodic force backup-plex
+```
+
+### Restore from Backup
+
+The restore job is a parameterized batch job that must be dispatched manually:
+
+```bash
+# Restore from latest backup
+nomad job dispatch restore-plex
+
+# Restore from specific date
+nomad job dispatch -meta backup_date=2025-01-15 restore-plex
+```
+
+**Important:** Stop the media server before restoring, then restart it after:
+
+```bash
+# Stop
+nomad job stop plex
+
+# Restore
+nomad job dispatch restore-plex
+
+# Wait for restore to complete, then restart
+nomad-pack run plex --registry=mediaserver -var enable_restore=true
+```
+
+Or use the `restore-media-server.yml` Ansible playbook from [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) which handles this automatically.
+
+## Plex Setup
+
+### Claim Token
+
+Set up Nomad variables for the Plex claim token:
+
+```bash
+# Get claim token from https://plex.tv/claim (valid 4 minutes)
+nomad var put nomad/jobs/plex claim_token="claim-xxxxxxxxxxxx" version="latest"
+```
+
+The claim token is only needed for initial setup. After Plex is claimed, it persists in the configuration.
+
+### GPU Transcoding
+
+Ensure `/dev/dri` exists on the host and is accessible. The container maps `/dev/dri:/dev/dri` when `gpu_transcoding=true`.
+
+## Jellyfin Setup
+
+No special setup required. Jellyfin initializes on first run.
+
+For GPU transcoding, ensure `/dev/dri` exists on the host.
 
 ## Destroying Deployments
 
@@ -281,6 +286,38 @@ No additional setup required. Jellyfin will initialize on first run.
 nomad-pack destroy plex --registry=mediaserver
 nomad-pack destroy jellyfin --registry=mediaserver
 ```
+
+## Troubleshooting
+
+### Check Job Status
+
+```bash
+nomad job status plex
+nomad alloc logs -job plex
+```
+
+### Check Volume Mounts
+
+```bash
+nomad volume status
+nomad volume status -type host
+```
+
+### View Backup Logs
+
+```bash
+nomad alloc logs -job backup-plex
+```
+
+### CSI Plugin Issues
+
+```bash
+nomad plugin status smb
+```
+
+## Related Repositories
+
+- [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) - Ansible playbooks for complete infrastructure deployment including CSI plugins, volumes, and automated restore
 
 ## License
 
