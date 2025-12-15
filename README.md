@@ -23,6 +23,7 @@ Each pack includes:
 | `prowlarr` | Prowlarr - Indexer manager | 9696 |
 | `overseerr` | Overseerr - Request management for Plex | 5055 |
 | `tautulli` | Tautulli - Plex monitoring and statistics | 8181 |
+| `sabnzbd` | SABnzbd - Usenet download client | 8080 |
 
 ## Prerequisites
 
@@ -125,6 +126,7 @@ nomad-pack run jellyfin --registry=mediaserver
 - Prowlarr: http://your-server:9696
 - Overseerr: http://your-server:5055
 - Tautulli: http://your-server:8181
+- SABnzbd: http://your-server:8080
 
 ## Volume Requirements
 
@@ -150,6 +152,7 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Prowlarr | `prowlarr-config` | Configuration and database |
 | Overseerr | `overseerr-config` | Configuration and database |
 | Tautulli | `tautulli-config` | Configuration and database |
+| SABnzbd | `sabnzbd-config` | Configuration and database |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -330,6 +333,14 @@ nomad-pack info plex --registry=mediaserver
 | `tautulli_gid` | GID for Tautulli process (PGID) | `1000` |
 | `port` | Tautulli web interface port | `8181` |
 
+### SABnzbd-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `sabnzbd_uid` | UID for SABnzbd process (PUID) | `1000` |
+| `sabnzbd_gid` | GID for SABnzbd process (PGID) | `1000` |
+| `port` | SABnzbd web interface port | `8080` |
+
 ### Backup/Update Variables
 
 | Variable | Description | Default |
@@ -479,6 +490,14 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `tautulli-backup` | batch/periodic | Daily backup (if enabled) |
 | `tautulli-update` | batch/periodic | Daily version check (if enabled) |
 
+### SABnzbd Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `sabnzbd` | service | Main SABnzbd service |
+| `sabnzbd-backup` | batch/periodic | Daily backup (if enabled) |
+| `sabnzbd-update` | batch/periodic | Daily version check (if enabled) |
+
 ## Backup and Restore
 
 ### What Gets Backed Up
@@ -491,6 +510,7 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 - **Prowlarr**: `prowlarr.db`, `config.xml`, `Backups/*`
 - **Overseerr**: `db/db.sqlite3`, `settings.json`
 - **Tautulli**: `tautulli.db`, `config.ini`, `backups/*`
+- **SABnzbd**: `sabnzbd.ini`, `sabnzbd.db`, `admin/*`
 
 Backups are stored in the backup CSI volume at `/{service}/YYYY-MM-DD/`.
 
@@ -616,6 +636,9 @@ nomad-pack run radarr --registry=mediaserver
 nomad-pack run sonarr --registry=mediaserver
 nomad-pack run lidarr --registry=mediaserver
 
+# Deploy download client
+nomad-pack run sabnzbd --registry=mediaserver
+
 # Deploy request management and monitoring
 nomad-pack run overseerr --registry=mediaserver
 nomad-pack run tautulli --registry=mediaserver
@@ -635,6 +658,7 @@ nomad-pack destroy lidarr --registry=mediaserver
 nomad-pack destroy prowlarr --registry=mediaserver
 nomad-pack destroy overseerr --registry=mediaserver
 nomad-pack destroy tautulli --registry=mediaserver
+nomad-pack destroy sabnzbd --registry=mediaserver
 ```
 
 ## Troubleshooting
