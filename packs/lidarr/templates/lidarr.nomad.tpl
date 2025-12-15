@@ -57,6 +57,7 @@ job "[[ var "job_name" . ]]" {
 TZ=[[ var "timezone" . ]]
 PUID=[[ var "lidarr_uid" . ]]
 PGID=[[ var "lidarr_gid" . ]]
+DOCKER_IMAGE_VERSION={{- with nomadVar "[[ var "nomad_variable_path" . ]]" -}}{{ .version }}{{- end }}
 EOH
         destination = "local/env_vars"
         env         = true

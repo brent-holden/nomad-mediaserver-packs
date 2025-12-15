@@ -61,6 +61,9 @@ job "[[ var "job_name" . ]]" {
       template {
         data = <<EOH
 TZ=[[ var "timezone" . ]]
+JELLYFIN_UID=[[ var "jellyfin_uid" . ]]
+JELLYFIN_GID=[[ var "jellyfin_gid" . ]]
+DOCKER_IMAGE_VERSION={{- with nomadVar "[[ var "nomad_variable_path" . ]]" -}}{{ .version }}{{- end }}
 EOH
         destination = "local/env_vars"
         env         = true
