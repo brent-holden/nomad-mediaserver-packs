@@ -153,6 +153,30 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
+#### Creating Host Volumes Manually
+
+If not using Ansible, create host volumes with:
+
+```bash
+# Get your node ID
+NODE_ID=$(nomad node status -short | grep ready | awk '{print $1}')
+
+# Create a host volume
+cat <<EOF | nomad volume create -
+name      = "radarr-config"
+type      = "host"
+plugin_id = "mkdir"
+node_id   = "$NODE_ID"
+
+capability {
+  access_mode     = "single-node-multi-writer"
+  attachment_mode = "file-system"
+}
+EOF
+```
+
+Repeat for each service you want to deploy, changing the volume name accordingly.
+
 ### CSI Plugin
 
 The CSI SMB/CIFS plugin must be deployed before registering volumes. See [nomad-csi-cifs](https://github.com/brent-holden/nomad-csi-cifs) for plugin deployment and volume configuration.
@@ -265,6 +289,46 @@ nomad-pack info plex --registry=mediaserver
 | `radarr_uid` | UID for Radarr process (PUID) | `1000` |
 | `radarr_gid` | GID for Radarr process (PGID) | `1000` |
 | `port` | Radarr web interface port | `7878` |
+
+### Sonarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `sonarr_uid` | UID for Sonarr process (PUID) | `1000` |
+| `sonarr_gid` | GID for Sonarr process (PGID) | `1000` |
+| `port` | Sonarr web interface port | `8989` |
+
+### Lidarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `lidarr_uid` | UID for Lidarr process (PUID) | `1000` |
+| `lidarr_gid` | GID for Lidarr process (PGID) | `1000` |
+| `port` | Lidarr web interface port | `8686` |
+
+### Prowlarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `prowlarr_uid` | UID for Prowlarr process (PUID) | `1000` |
+| `prowlarr_gid` | GID for Prowlarr process (PGID) | `1000` |
+| `port` | Prowlarr web interface port | `9696` |
+
+### Overseerr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `overseerr_uid` | UID for Overseerr process (PUID) | `1000` |
+| `overseerr_gid` | GID for Overseerr process (PGID) | `1000` |
+| `port` | Overseerr web interface port | `5055` |
+
+### Tautulli-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `tautulli_uid` | UID for Tautulli process (PUID) | `1000` |
+| `tautulli_gid` | GID for Tautulli process (PGID) | `1000` |
+| `port` | Tautulli web interface port | `8181` |
 
 ### Backup/Update Variables
 
@@ -488,11 +552,89 @@ No special setup required. Jellyfin initializes on first run.
 
 For GPU transcoding, ensure `/dev/dri` exists on the host.
 
+## *Arr Stack Setup
+
+The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together as an automated media management stack.
+
+### Recommended Deployment Order
+
+1. **Prowlarr** - Indexer manager (deploy first, configure indexers)
+2. **Radarr** - Movie management
+3. **Sonarr** - TV series management
+4. **Lidarr** - Music management (optional)
+5. **Overseerr** - Request management (deploy after Radarr/Sonarr)
+6. **Tautulli** - Plex monitoring (deploy after Plex)
+
+### Service Connections
+
+After deployment, configure the services to communicate:
+
+| Service | Connects To | Configuration Path |
+|---------|-------------|-------------------|
+| Prowlarr | Radarr, Sonarr, Lidarr | Settings → Apps |
+| Radarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
+| Sonarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
+| Lidarr | Prowlarr, Download Client | Settings → Indexers, Settings → Download Clients |
+| Overseerr | Plex, Radarr, Sonarr | Settings → Plex, Settings → Radarr/Sonarr |
+| Tautulli | Plex | Settings → Plex Media Server |
+
+### Media Path Configuration
+
+All *arr apps mount the media volume at `/media`. Configure root folders as:
+
+| Service | Root Folder | Download Path |
+|---------|-------------|---------------|
+| Radarr | `/media/movies` | `/media/downloads/complete/movies` |
+| Sonarr | `/media/tv` | `/media/downloads/complete/tv` |
+| Lidarr | `/media/music` | `/media/downloads/complete/music` |
+
+### API Keys
+
+Each *arr app generates an API key on first run. Find it at:
+- **Settings → General → Security → API Key**
+
+You'll need these API keys when connecting services (e.g., adding Radarr to Prowlarr or Overseerr).
+
+## Deploying the Full Stack
+
+Deploy all services for a complete media automation setup:
+
+```bash
+# Add the registry
+nomad-pack registry add mediaserver github.com/brent-holden/nomad-mediaserver-packs
+
+# Deploy media server (choose one)
+nomad-pack run plex --registry=mediaserver --var enable_restore=true
+# or
+nomad-pack run jellyfin --registry=mediaserver
+
+# Deploy indexer manager
+nomad-pack run prowlarr --registry=mediaserver
+
+# Deploy media managers
+nomad-pack run radarr --registry=mediaserver
+nomad-pack run sonarr --registry=mediaserver
+nomad-pack run lidarr --registry=mediaserver
+
+# Deploy request management and monitoring
+nomad-pack run overseerr --registry=mediaserver
+nomad-pack run tautulli --registry=mediaserver
+```
+
+**Note:** Each pack requires its corresponding host volume. Create volumes before deploying (see [Creating Host Volumes Manually](#creating-host-volumes-manually)).
+
 ## Destroying Deployments
 
 ```bash
+# Destroy individual packs
 nomad-pack destroy plex --registry=mediaserver
 nomad-pack destroy jellyfin --registry=mediaserver
+nomad-pack destroy radarr --registry=mediaserver
+nomad-pack destroy sonarr --registry=mediaserver
+nomad-pack destroy lidarr --registry=mediaserver
+nomad-pack destroy prowlarr --registry=mediaserver
+nomad-pack destroy overseerr --registry=mediaserver
+nomad-pack destroy tautulli --registry=mediaserver
 ```
 
 ## Troubleshooting
