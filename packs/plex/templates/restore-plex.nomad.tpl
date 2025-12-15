@@ -26,8 +26,10 @@ job "restore-[[ var "job_name" . ]]" {
     }
 
     volume "plex-config" {
-      type   = "host"
-      source = "[[ var "config_volume_name" . ]]"
+      type            = "host"
+      source          = "[[ var "config_volume_name" . ]]"
+      access_mode     = "single-node-multi-writer"
+      attachment_mode = "file-system"
     }
 
     volume "backup-drive" {

@@ -133,6 +133,8 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Plex | `plex-config` | Configuration, database, and metadata |
 | Jellyfin | `jellyfin-config` | Configuration, database, and metadata |
 
+**Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
+
 ### CSI Volumes
 
 CSI volumes provide access to network storage (SMB/CIFS shares):
