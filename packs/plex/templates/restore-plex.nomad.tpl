@@ -42,9 +42,8 @@ job "restore-[[ var "job_name" . ]]" {
       driver = "podman"
 
       config {
-        image        = "docker.io/debian:bookworm-slim"
-        args         = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/restore-plex.sh"]
-        network_mode = "host"
+        image = "docker.io/debian:bookworm-slim"
+        args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/restore-plex.sh"]
       }
 
       volume_mount {
@@ -58,10 +57,6 @@ job "restore-[[ var "job_name" . ]]" {
         read_only   = true
       }
 
-      env {
-        NOMAD_ADDR = "http://127.0.0.1:4646"
-      }
-
       template {
         data = <<EOF
 #!/bin/sh
@@ -72,8 +67,8 @@ echo "Plex Restore Job"
 echo "=========================================="
 
 # Install required tools
-echo "Installing required tools..."
-apt-get update -qq && apt-get install -y -qq curl rsync > /dev/null 2>&1
+echo "Installing rsync..."
+apt-get update -qq && apt-get install -y -qq rsync > /dev/null 2>&1
 
 # Configuration
 BACKUP_DIR="/backups/plex"
@@ -106,20 +101,6 @@ fi
 echo "Backup source: $RESTORE_SOURCE"
 echo ""
 
-# Stop Plex service
-echo "Stopping Plex service..."
-STOP_RESULT=$(curl -s -X POST "$NOMAD_ADDR/v1/job/[[ var "job_name" . ]]/deregister?purge=false" 2>&1)
-if echo "$STOP_RESULT" | grep -q "EvalID"; then
-    echo "Plex job stopped successfully"
-else
-    echo "Warning: Could not stop Plex job (may already be stopped)"
-    echo "Response: $STOP_RESULT"
-fi
-
-# Wait for Plex to fully stop
-echo "Waiting for Plex to stop..."
-sleep 10
-
 # Create target directories if they don't exist
 echo "Preparing restore directories..."
 mkdir -p "$PLEX_MEDIA_SERVER/Plug-in Support/Databases"
@@ -150,14 +131,6 @@ echo ""
 echo "=========================================="
 echo "Restore complete!"
 echo "=========================================="
-echo ""
-echo "IMPORTANT: The Plex job has been stopped."
-echo "To start Plex again, run:"
-echo "  nomad-pack run --registry=mediaserver plex"
-echo ""
-echo "Or redeploy via Ansible:"
-echo "  ansible-playbook -i inventory.ini playbooks/deploy-media-server.yml"
-echo ""
 EOF
         destination = "local/restore-plex.sh"
         perms       = "0755"
