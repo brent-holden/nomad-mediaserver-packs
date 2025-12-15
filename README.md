@@ -252,6 +252,17 @@ nomad-pack info plex --registry=mediaserver
 | `namespace` | Nomad namespace | `default` |
 | `timezone` | Timezone for schedules | `America/New_York` |
 
+### User/Group Configuration
+
+All packs default to the same UID (1002) and GID (1001) for consistent file permissions across shared CSI volumes. This ensures that files created by one service (e.g., SABnzbd downloads) can be read and modified by other services (e.g., Radarr importing to Plex library).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `{service}_uid` | UID for the service process | `1002` |
+| `{service}_gid` | GID for the service process | `1001` |
+
+**Important:** If you change the UID/GID for one service, you should change it for all services that share the media volume to avoid permission issues.
+
 ### Feature Toggles
 
 | Variable | Description | Default |
