@@ -360,6 +360,89 @@ nomad alloc logs -job backup-plex
 nomad plugin status cifs
 ```
 
+## Setup Script Reference
+
+The `setup.sh` script provides a standalone deployment option that doesn't require Ansible or the nomad-mediaserver-infra repository.
+
+### What It Does
+
+1. **Validates prerequisites** - Checks for Nomad connectivity, nomad-pack, and CSI plugin
+2. **Creates CSI volumes** - Registers media-drive and backup-drive with proper mount options
+3. **Creates host volumes** - Creates plex-config or jellyfin-config using the mkdir plugin
+4. **Sets up registry** - Adds/updates the nomad-pack registry
+5. **Deploys media server** - Runs nomad-pack with specified options
+6. **Verifies deployment** - Waits for the job to be running
+
+### Command Line Options
+
+```bash
+./setup.sh [plex|jellyfin] [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `plex` | Deploy Plex Media Server (default) |
+| `jellyfin` | Deploy Jellyfin Media Server |
+| `--no-gpu` | Disable GPU transcoding |
+| `--no-backup` | Disable backup job |
+| `--no-update` | Disable update job |
+| `--no-restore` | Disable restore job |
+| `--help`, `-h` | Show help message |
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `NOMAD_ADDR` | Nomad server address | - | Yes |
+| `FILESERVER_PASSWORD` | SMB/CIFS password | - | Yes |
+| `FILESERVER_IP` | NAS/fileserver IP address | `10.100.0.1` | No |
+| `FILESERVER_MEDIA_SHARE` | Media share name | `media` | No |
+| `FILESERVER_BACKUP_SHARE` | Backup share name | `backups` | No |
+| `FILESERVER_USERNAME` | SMB/CIFS username | `plex` | No |
+| `USER_UID` | UID for volume ownership | `1002` | No |
+| `GROUP_GID` | GID for volume ownership | `1001` | No |
+| `CSI_PLUGIN_ID` | CSI plugin ID | `cifs` | No |
+| `GPU_TRANSCODING` | Enable GPU transcoding | `true` | No |
+| `ENABLE_BACKUP` | Enable backup job | `true` | No |
+| `ENABLE_UPDATE` | Enable update job | `true` | No |
+| `ENABLE_RESTORE` | Enable restore job | `true` | No |
+
+### Examples
+
+```bash
+# Basic Plex deployment
+NOMAD_ADDR=http://192.168.0.10:4646 \
+FILESERVER_PASSWORD=secret \
+./setup.sh plex
+
+# Jellyfin without GPU
+NOMAD_ADDR=http://192.168.0.10:4646 \
+FILESERVER_PASSWORD=secret \
+./setup.sh jellyfin --no-gpu
+
+# Custom fileserver settings
+NOMAD_ADDR=http://192.168.0.10:4646 \
+FILESERVER_IP=192.168.1.100 \
+FILESERVER_USERNAME=mediauser \
+FILESERVER_PASSWORD=secret \
+FILESERVER_MEDIA_SHARE=movies \
+./setup.sh plex
+
+# Minimal deployment (no backup/update/restore jobs)
+NOMAD_ADDR=http://192.168.0.10:4646 \
+FILESERVER_PASSWORD=secret \
+./setup.sh plex --no-backup --no-update --no-restore
+```
+
+### Prerequisites
+
+Before running `setup.sh`, ensure:
+
+1. **Nomad cluster** is running with dynamic host volumes enabled (`host_volumes_dir` configured)
+2. **CSI plugin** is deployed with plugin ID `cifs` (or set `CSI_PLUGIN_ID` to match your plugin)
+3. **NAS/fileserver** is accessible with SMB/CIFS shares configured
+4. **nomad** and **nomad-pack** CLI tools are installed
+
 ## Related Repositories
 
 - [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) - Ansible playbooks for complete infrastructure deployment including CSI plugins, volumes, and automated restore
