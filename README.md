@@ -312,7 +312,7 @@ nomad alloc logs -job backup-plex
 ### CSI Plugin Issues
 
 ```bash
-nomad plugin status smb
+nomad plugin status cifs
 ```
 
 ## Related Repositories

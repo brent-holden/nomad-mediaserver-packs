@@ -1,7 +1,7 @@
 id        = "media-drive"
 name      = "media-drive"
 type      = "csi"
-plugin_id = "smb"
+plugin_id = "cifs"
 
 capability {
   access_mode     = "multi-node-multi-writer"

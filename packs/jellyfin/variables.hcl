@@ -154,7 +154,7 @@ variable "deploy_csi_volumes" {
 variable "csi_plugin_id" {
   description = "The CSI plugin ID to use for volumes"
   type        = string
-  default     = "smb"
+  default     = "cifs"
 }
 
 variable "csi_volume_username" {
