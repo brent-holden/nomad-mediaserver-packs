@@ -34,66 +34,6 @@ job "[[ var "job_name" . ]]" {
       }
     }
 
-    # Create dynamic host volumes before main task starts
-    task "create-volumes" {
-      lifecycle {
-        hook    = "prestart"
-        sidecar = false
-      }
-
-      driver = "exec"
-
-      config {
-        command = "/bin/sh"
-        args    = ["-c", "nomad volume create -detach /local/config-volume.hcl 2>/dev/null || true; nomad volume create -detach /local/cache-volume.hcl 2>/dev/null || true"]
-      }
-
-      template {
-        data = <<EOH
-name      = "[[ var "config_volume_name" . ]]"
-type      = "host"
-plugin_id = "mkdir"
-
-capability {
-  access_mode     = "single-node-writer"
-  attachment_mode = "file-system"
-}
-
-parameters {
-  mode = "0755"
-  uid  = "[[ var "jellyfin_uid" . ]]"
-  gid  = "[[ var "jellyfin_gid" . ]]"
-}
-EOH
-        destination = "local/config-volume.hcl"
-      }
-
-      template {
-        data = <<EOH
-name      = "[[ var "cache_volume_name" . ]]"
-type      = "host"
-plugin_id = "mkdir"
-
-capability {
-  access_mode     = "single-node-writer"
-  attachment_mode = "file-system"
-}
-
-parameters {
-  mode = "0755"
-  uid  = "[[ var "jellyfin_uid" . ]]"
-  gid  = "[[ var "jellyfin_gid" . ]]"
-}
-EOH
-        destination = "local/cache-volume.hcl"
-      }
-
-      resources {
-        cpu    = 50
-        memory = 32
-      }
-    }
-
     task "jellyfin" {
       driver = "podman"
 
