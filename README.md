@@ -498,6 +498,51 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `sabnzbd-backup` | batch/periodic | Daily backup (if enabled) |
 | `sabnzbd-update` | batch/periodic | Daily version check (if enabled) |
 
+## Automatic Updates
+
+Each pack includes an optional update job that periodically checks for new container versions and stores the latest version in a Nomad variable. This allows the main service job to reference `{{ with nomadVar }}` for automated updates.
+
+### How Updates Work
+
+1. **Version Check**: The update job runs on a configurable schedule (default: 3am daily)
+2. **Docker Hub Query**: Queries the Docker Hub API for the latest stable container tag
+3. **Nomad Variable Update**: Stores the version in `nomad/jobs/{service}` with key `version`
+4. **Service Restart**: The main service can be configured to watch the Nomad variable and restart when it changes
+
+### Version Detection
+
+The update jobs detect the latest stable version by querying Docker Hub and filtering for semantic version tags:
+
+| Service | Image | Version Pattern | Example |
+|---------|-------|-----------------|---------|
+| Plex | Official Plex API | N/A | Uses plex.tv API directly |
+| Jellyfin | linuxserver/jellyfin | `X.X.X` | `10.10.3` |
+| Radarr | linuxserver/radarr | `X.X.X` | `6.0.4` |
+| Sonarr | linuxserver/sonarr | `X.X.X.X` | `4.0.11.2680` |
+| Lidarr | linuxserver/lidarr | `X.X.X.X` | `2.7.1.4417` |
+| Prowlarr | linuxserver/prowlarr | `X.X.X.X` | `1.28.2.4885` |
+| Overseerr | linuxserver/overseerr | `X.X.X` | `1.34.1` |
+| Tautulli | linuxserver/tautulli | `X.X.X` | `2.15.0` |
+| SABnzbd | linuxserver/sabnzbd | `X.X.X` | `4.4.1` |
+
+**Note:** Plex uses the official Plex API at `plex.tv` to get the latest version, not the linuxserver container image.
+
+### Checking Current Version
+
+```bash
+# View the stored version for a service
+nomad var get nomad/jobs/radarr
+
+# Manually trigger an update check
+nomad job periodic force radarr-update
+```
+
+### Disabling Updates
+
+```bash
+nomad-pack run radarr --registry=mediaserver -var enable_update=false
+```
+
 ## Backup and Restore
 
 ### What Gets Backed Up
