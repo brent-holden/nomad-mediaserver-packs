@@ -19,11 +19,6 @@ job "[[ var "job_name" . ]]" {
       source = "[[ var "config_volume_name" . ]]"
     }
 
-    volume "plex-transcode" {
-      type   = "host"
-      source = "[[ var "transcode_volume_name" . ]]"
-    }
-
     network {
       mode = "host"
       port "plex" {
@@ -51,11 +46,6 @@ job "[[ var "job_name" . ]]" {
       volume_mount {
         volume      = "plex-config"
         destination = "/config"
-      }
-
-      volume_mount {
-        volume      = "plex-transcode"
-        destination = "/transcode"
       }
 
       volume_mount {

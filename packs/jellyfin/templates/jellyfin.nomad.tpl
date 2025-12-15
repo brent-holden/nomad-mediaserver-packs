@@ -19,11 +19,6 @@ job "[[ var "job_name" . ]]" {
       source = "[[ var "config_volume_name" . ]]"
     }
 
-    volume "jellyfin-cache" {
-      type   = "host"
-      source = "[[ var "cache_volume_name" . ]]"
-    }
-
     network {
       mode = "host"
       port "http" {
@@ -54,11 +49,6 @@ job "[[ var "job_name" . ]]" {
       volume_mount {
         volume      = "jellyfin-config"
         destination = "/config"
-      }
-
-      volume_mount {
-        volume      = "jellyfin-cache"
-        destination = "/cache"
       }
 
       volume_mount {

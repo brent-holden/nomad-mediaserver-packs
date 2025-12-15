@@ -82,12 +82,6 @@ variable "config_volume_name" {
   default     = "plex-config"
 }
 
-variable "transcode_volume_name" {
-  description = "The name of the host volume for Plex transcoding"
-  type        = string
-  default     = "plex-transcode"
-}
-
 variable "register_consul_service" {
   description = "Register the Plex service with Consul"
   type        = bool

@@ -88,12 +88,6 @@ variable "config_volume_name" {
   default     = "jellyfin-config"
 }
 
-variable "cache_volume_name" {
-  description = "The name of the host volume for Jellyfin cache"
-  type        = string
-  default     = "jellyfin-cache"
-}
-
 variable "register_consul_service" {
   description = "Register the Jellyfin service with Consul"
   type        = bool
