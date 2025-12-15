@@ -31,13 +31,13 @@ variable "image" {
 variable "sonarr_uid" {
   description = "The UID for the Sonarr user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "sonarr_gid" {
   description = "The GID for the Sonarr group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {

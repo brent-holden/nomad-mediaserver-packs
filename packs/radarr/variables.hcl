@@ -31,13 +31,13 @@ variable "image" {
 variable "radarr_uid" {
   description = "The UID for the Radarr user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "radarr_gid" {
   description = "The GID for the Radarr group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {

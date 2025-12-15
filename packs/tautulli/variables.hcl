@@ -31,13 +31,13 @@ variable "image" {
 variable "tautulli_uid" {
   description = "The UID for the Tautulli user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "tautulli_gid" {
   description = "The GID for the Tautulli group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {

@@ -31,13 +31,13 @@ variable "image" {
 variable "overseerr_uid" {
   description = "The UID for the Overseerr user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "overseerr_gid" {
   description = "The GID for the Overseerr group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {

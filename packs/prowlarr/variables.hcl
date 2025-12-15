@@ -31,13 +31,13 @@ variable "image" {
 variable "prowlarr_uid" {
   description = "The UID for the Prowlarr user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "prowlarr_gid" {
   description = "The GID for the Prowlarr group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {

@@ -289,56 +289,56 @@ nomad-pack info plex --registry=mediaserver
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `radarr_uid` | UID for Radarr process (PUID) | `1000` |
-| `radarr_gid` | GID for Radarr process (PGID) | `1000` |
+| `radarr_uid` | UID for Radarr process (PUID) | `1002` |
+| `radarr_gid` | GID for Radarr process (PGID) | `1001` |
 | `port` | Radarr web interface port | `7878` |
 
 ### Sonarr-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `sonarr_uid` | UID for Sonarr process (PUID) | `1000` |
-| `sonarr_gid` | GID for Sonarr process (PGID) | `1000` |
+| `sonarr_uid` | UID for Sonarr process (PUID) | `1002` |
+| `sonarr_gid` | GID for Sonarr process (PGID) | `1001` |
 | `port` | Sonarr web interface port | `8989` |
 
 ### Lidarr-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `lidarr_uid` | UID for Lidarr process (PUID) | `1000` |
-| `lidarr_gid` | GID for Lidarr process (PGID) | `1000` |
+| `lidarr_uid` | UID for Lidarr process (PUID) | `1002` |
+| `lidarr_gid` | GID for Lidarr process (PGID) | `1001` |
 | `port` | Lidarr web interface port | `8686` |
 
 ### Prowlarr-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `prowlarr_uid` | UID for Prowlarr process (PUID) | `1000` |
-| `prowlarr_gid` | GID for Prowlarr process (PGID) | `1000` |
+| `prowlarr_uid` | UID for Prowlarr process (PUID) | `1002` |
+| `prowlarr_gid` | GID for Prowlarr process (PGID) | `1001` |
 | `port` | Prowlarr web interface port | `9696` |
 
 ### Overseerr-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `overseerr_uid` | UID for Overseerr process (PUID) | `1000` |
-| `overseerr_gid` | GID for Overseerr process (PGID) | `1000` |
+| `overseerr_uid` | UID for Overseerr process (PUID) | `1002` |
+| `overseerr_gid` | GID for Overseerr process (PGID) | `1001` |
 | `port` | Overseerr web interface port | `5055` |
 
 ### Tautulli-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `tautulli_uid` | UID for Tautulli process (PUID) | `1000` |
-| `tautulli_gid` | GID for Tautulli process (PGID) | `1000` |
+| `tautulli_uid` | UID for Tautulli process (PUID) | `1002` |
+| `tautulli_gid` | GID for Tautulli process (PGID) | `1001` |
 | `port` | Tautulli web interface port | `8181` |
 
 ### SABnzbd-Specific Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `sabnzbd_uid` | UID for SABnzbd process (PUID) | `1000` |
-| `sabnzbd_gid` | GID for SABnzbd process (PGID) | `1000` |
+| `sabnzbd_uid` | UID for SABnzbd process (PUID) | `1002` |
+| `sabnzbd_gid` | GID for SABnzbd process (PGID) | `1001` |
 | `port` | SABnzbd web interface port | `8080` |
 
 ### Backup/Update Variables

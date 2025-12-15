@@ -31,13 +31,13 @@ variable "image" {
 variable "sabnzbd_uid" {
   description = "The UID for the SABnzbd user inside the container (PUID)"
   type        = number
-  default     = 1000
+  default     = 1002
 }
 
 variable "sabnzbd_gid" {
   description = "The GID for the SABnzbd group inside the container (PGID)"
   type        = number
-  default     = 1000
+  default     = 1001
 }
 
 variable "timezone" {
