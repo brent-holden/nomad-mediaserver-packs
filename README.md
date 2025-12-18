@@ -22,6 +22,7 @@ Each pack includes:
 | `lidarr` | Lidarr - Music collection manager | 8686 |
 | `prowlarr` | Prowlarr - Indexer manager | 9696 |
 | `overseerr` | Overseerr - Request management for Plex | 5055 |
+| `overseerr-reverse-proxy` | Caddy reverse proxy for Overseerr with HTTPS | 80, 443 |
 | `tautulli` | Tautulli - Plex monitoring and statistics | 8181 |
 | `sabnzbd` | SABnzbd - Usenet download client | 8080 |
 
@@ -124,7 +125,7 @@ nomad-pack run jellyfin --registry=mediaserver
 - Sonarr: http://your-server:8989
 - Lidarr: http://your-server:8686
 - Prowlarr: http://your-server:9696
-- Overseerr: http://your-server:5055
+- Overseerr: http://your-server:5055 (or https://your-dns-name via reverse proxy)
 - Tautulli: http://your-server:8181
 - SABnzbd: http://your-server:8080
 
@@ -335,6 +336,16 @@ All packs default to the same UID (1002) and GID (1001) for consistent file perm
 | `overseerr_uid` | UID for Overseerr process (PUID) | `1002` |
 | `overseerr_gid` | GID for Overseerr process (PGID) | `1001` |
 | `port` | Overseerr web interface port | `5055` |
+
+### Overseerr Reverse Proxy Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `dns_name` | DNS name for HTTPS (required) | - |
+| `upstream_address` | Address of Overseerr service | `localhost` |
+| `upstream_port` | Port of Overseerr service | `5055` |
+| `http_port` | HTTP port (redirect to HTTPS) | `80` |
+| `https_port` | HTTPS port | `443` |
 
 ### Tautulli-Specific Variables
 
@@ -781,6 +792,10 @@ nomad-pack run sabnzbd --registry=mediaserver
 # Deploy request management and monitoring
 nomad-pack run overseerr --registry=mediaserver
 nomad-pack run tautulli --registry=mediaserver
+
+# Optional: Deploy HTTPS reverse proxy for Overseerr
+nomad-pack run overseerr-reverse-proxy --registry=mediaserver \
+  --var dns_name="overseerr.example.com"
 ```
 
 **Note:** Each pack requires its corresponding host volume. Create volumes before deploying (see [Creating Host Volumes Manually](#creating-host-volumes-manually)).
@@ -796,6 +811,7 @@ nomad-pack destroy sonarr --registry=mediaserver
 nomad-pack destroy lidarr --registry=mediaserver
 nomad-pack destroy prowlarr --registry=mediaserver
 nomad-pack destroy overseerr --registry=mediaserver
+nomad-pack destroy overseerr-reverse-proxy --registry=mediaserver
 nomad-pack destroy tautulli --registry=mediaserver
 nomad-pack destroy sabnzbd --registry=mediaserver
 ```
