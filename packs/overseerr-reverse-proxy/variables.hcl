@@ -81,3 +81,9 @@ variable "consul_service_name" {
   type        = string
   default     = "overseerr-proxy"
 }
+
+variable "config_volume_name" {
+  description = "The name of the Overseerr config host volume (used to co-locate with Overseerr)"
+  type        = string
+  default     = "overseerr-config"
+}

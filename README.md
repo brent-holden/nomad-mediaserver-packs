@@ -346,6 +346,9 @@ All packs default to the same UID (1002) and GID (1001) for consistent file perm
 | `upstream_port` | Port of Overseerr service | `5055` |
 | `http_port` | HTTP port (redirect to HTTPS) | `80` |
 | `https_port` | HTTPS port | `443` |
+| `config_volume_name` | Overseerr config volume (for co-location) | `overseerr-config` |
+
+**Note:** The reverse proxy requires access to the `overseerr-config` host volume, which forces Nomad to place it on the same node as Overseerr.
 
 ### Tautulli-Specific Variables
 
