@@ -29,6 +29,7 @@ Each pack includes:
 | `unmanic` | Unmanic - Library optimizer for automatic media transcoding | 8888 |
 | `doplarr` | Doplarr - Discord/Slack bot for requesting media through *arr backends | 3000 (Slack) |
 | `fileflows` | FileFlows - Automated file processing with visual workflow pipelines | 5000 |
+| `tracearr` | Tracearr - Plex/Jellyfin/Emby monitoring with account sharing detection | 3005 |
 
 ## Prerequisites
 
@@ -135,6 +136,7 @@ nomad-pack run jellyfin --registry=mediaserver
 - SABnzbd: http://your-server:8080
 - Unmanic: http://your-server:8888
 - FileFlows: http://your-server:5000
+- Tracearr: http://your-server:3005
 
 ## Volume Requirements
 
@@ -164,6 +166,7 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | SABnzbd | `sabnzbd-config` | Configuration and database |
 | Unmanic | `unmanic-config` | Configuration and database |
 | FileFlows | `fileflows-config` | Configuration and database |
+| Tracearr | `tracearr-config`, `tracearr-postgres`, `tracearr-redis` | Image cache, TimescaleDB data, Redis data |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -469,6 +472,16 @@ nomad alloc logs -job doplarr
 | `port` | FileFlows web interface port | `5000` |
 | `temp_path` | Host path for processing cache (`/tmp/fileflows`) | `/tmp/fileflows` |
 
+### Tracearr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `port` | Tracearr web interface port | `3005` |
+| `postgres_image` | TimescaleDB image (pinned) | `timescale/timescaledb-ha:pg18.4-ts2.29.1` |
+| `postgres_port` | TimescaleDB port (bound to 127.0.0.1) | `5434` |
+| `redis_port` | Redis port (bound to 127.0.0.1) | `6381` |
+| `secrets_variable_path` | Nomad variable holding `jwt_secret`, `cookie_secret`, `db_password` | `nomad/jobs/tracearr/tracearr` |
+
 ### Backup/Update Variables
 
 | Variable | Description | Default |
@@ -652,6 +665,15 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `fileflows-update` | batch/periodic | Daily version check (if enabled) |
 | `fileflows-restore` | batch/parameterized | On-demand restore (if enabled) |
 
+### Tracearr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `tracearr` | service | Tracearr with TimescaleDB and Redis sidecars |
+| `tracearr-backup` | batch/periodic | Daily `pg_dump` backup (if enabled) |
+| `tracearr-update` | batch/periodic | Daily version check (if enabled) |
+| `tracearr-restore` | batch/parameterized | On-demand restore (if enabled) |
+
 ### Homarr Pack
 
 | Job | Type | Description |
@@ -694,6 +716,7 @@ The update jobs detect the latest stable version by querying Docker Hub and filt
 | SABnzbd | linuxserver/sabnzbd | `X.X.X` | `4.4.1` |
 | Unmanic | josh5/unmanic | `X.X.X` | `0.2.6` |
 | FileFlows | revenz/fileflows | `YY.MM` or `YY.MM.N` | `26.04` |
+| Tracearr | GitHub releases (connorgallopo/Tracearr) | `vX.X.X` | `v3.1.1` |
 | Homarr | GitHub releases (homarr-labs/homarr) | `X.X.X` | `1.0.0` |
 
 **Note:** Plex uses the official Plex API at `plex.tv` to get the latest version, not the linuxserver container image.
@@ -745,6 +768,7 @@ nomad-pack run radarr --registry=mediaserver -var enable_update=false
 - **SABnzbd**: `sabnzbd.ini`, `sabnzbd.db`, `admin/*`
 - **Unmanic**: `unmanic.db`, `settings.json`, `plugins/*`
 - **FileFlows**: `FileFlows.db`, `fileflows.config`, `Flows/*`, `Libraries/*`, `Plugins/*`, `Scripts/*`
+- **Tracearr**: `tracearr.dump` (`pg_dump` custom-format dump of the TimescaleDB database)
 - **Homarr**: Full `appdata/` directory
 
 Backups are stored in the backup CSI volume at `/{service}/YYYY-MM-DD/`.
@@ -797,7 +821,7 @@ nomad-pack run radarr --registry=mediaserver \
 **Available restore jobs:**
 - `plex-restore`, `jellyfin-restore`
 - `radarr-restore`, `sonarr-restore`, `lidarr-restore`, `prowlarr-restore`
-- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`, `fileflows-restore`
+- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`, `fileflows-restore`, `tracearr-restore`
 
 See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for the Ansible playbooks that handle this workflow automatically.
 
@@ -919,6 +943,7 @@ The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together with SABnzbd as a
 6. **Seerr** - Request management (connect to Plex/Jellyfin/Emby + Radarr/Sonarr)
 7. **Homarr** - Dashboard (add links to all services)
 8. **Tautulli** - Plex monitoring (connect to Plex)
+9. **Tracearr** - Multi-server monitoring (connect to Plex/Jellyfin/Emby)
 
 ### Service Connections
 
@@ -933,6 +958,7 @@ After deployment, configure the services to communicate:
 | Lidarr | Prowlarr, SABnzbd | Settings → Indexers, Settings → Download Clients |
 | Seerr | Plex/Jellyfin/Emby, Radarr, Sonarr | Settings → Media Server, Settings → Services |
 | Tautulli | Plex | Settings → Plex Media Server |
+| Tracearr | Plex/Jellyfin/Emby | First-run setup wizard, then Settings |
 
 ### Media Path Configuration
 
@@ -995,6 +1021,11 @@ nomad-pack run homarr --registry=mediaserver \
 # Deploy request management and monitoring
 nomad-pack run seerr --registry=mediaserver
 nomad-pack run tautulli --registry=mediaserver
+nomad var put nomad/jobs/tracearr/tracearr \
+  jwt_secret="$(openssl rand -hex 32)" \
+  cookie_secret="$(openssl rand -hex 32)" \
+  db_password="$(openssl rand -hex 24)"
+nomad-pack run tracearr --registry=mediaserver
 
 # Optional: Deploy HTTPS reverse proxy for Seerr (dns_name is required)
 nomad-pack run seerr-reverse-proxy --registry=mediaserver \
@@ -1020,6 +1051,7 @@ nomad-pack destroy tautulli --registry=mediaserver
 nomad-pack destroy sabnzbd --registry=mediaserver
 nomad-pack destroy unmanic --registry=mediaserver
 nomad-pack destroy fileflows --registry=mediaserver
+nomad-pack destroy tracearr --registry=mediaserver
 ```
 
 ## Troubleshooting
