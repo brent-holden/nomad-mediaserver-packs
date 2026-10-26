@@ -942,8 +942,7 @@ The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together with SABnzbd as a
 5. **Lidarr** - Music management (connect to Prowlarr + SABnzbd)
 6. **Seerr** - Request management (connect to Plex/Jellyfin/Emby + Radarr/Sonarr)
 7. **Homarr** - Dashboard (add links to all services)
-8. **Tautulli** - Plex monitoring (connect to Plex)
-9. **Tracearr** - Multi-server monitoring (connect to Plex/Jellyfin/Emby)
+8. **Tracearr** (recommended) *or* **Tautulli** - Playback monitoring. Tracearr covers Plex, Jellyfin, and Emby and can import Tautulli history; Tautulli is Plex-only
 
 ### Service Connections
 
@@ -1020,12 +1019,12 @@ nomad-pack run homarr --registry=mediaserver \
 
 # Deploy request management and monitoring
 nomad-pack run seerr --registry=mediaserver
-nomad-pack run tautulli --registry=mediaserver
 nomad var put nomad/jobs/tracearr/tracearr \
   jwt_secret="$(openssl rand -hex 32)" \
   cookie_secret="$(openssl rand -hex 32)" \
   db_password="$(openssl rand -hex 24)"
 nomad-pack run tracearr --registry=mediaserver
+# or, for Plex-only monitoring: nomad-pack run tautulli --registry=mediaserver
 
 # Optional: Deploy HTTPS reverse proxy for Seerr (dns_name is required)
 nomad-pack run seerr-reverse-proxy --registry=mediaserver \
