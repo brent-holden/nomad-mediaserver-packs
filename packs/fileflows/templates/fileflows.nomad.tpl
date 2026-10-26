@@ -82,7 +82,7 @@ EOH
 
         check {
           type     = "http"
-          path     = "/api/status"
+          path     = "/"
           interval = "30s"
           timeout  = "10s"
         }
