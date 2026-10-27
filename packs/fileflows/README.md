@@ -103,6 +103,10 @@ FileFlows writes large temporary files during transcoding. The `temp_path` varia
 nomad-pack run packs/fileflows -var temp_path=/ssd/fileflows-temp
 ```
 
+## Self-Healing
+
+The Consul health check includes a `check_restart` policy: if the web UI fails 5 consecutive checks (~2.5 minutes of unresponsiveness), Nomad restarts the task automatically. This recovers the server from wedged states caused by CPU starvation during heavy transcoding (e.g. 4K VMAF quality comparisons), which would otherwise leave the UI unreachable until the processing finishes. Note that a restart kills any in-flight flows; FileFlows will re-queue them on startup.
+
 ## Access
 
 After deployment, access FileFlows at: `http://<nomad-client-ip>:5000`

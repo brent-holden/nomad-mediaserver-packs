@@ -85,6 +85,13 @@ EOH
           path     = "/"
           interval = "30s"
           timeout  = "10s"
+
+          # Restart the task if the web UI stays unresponsive, e.g. when
+          # heavy transcoding starves the server into a wedged state
+          check_restart {
+            limit = 5
+            grace = "120s"
+          }
         }
       }
 [[- end ]]
