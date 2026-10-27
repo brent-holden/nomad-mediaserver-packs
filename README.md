@@ -30,6 +30,7 @@ Each pack includes:
 | `doplarr` | Doplarr - Discord/Slack bot for requesting media through *arr backends | 3000 (Slack) |
 | `fileflows` | FileFlows - Automated file processing with visual workflow pipelines | 5000 |
 | `tracearr` | Tracearr - Plex/Jellyfin/Emby monitoring with account sharing detection | 3005 |
+| `questarr` | Questarr - Game library manager with discovery, tracking, and automated downloads | 5050 |
 
 ## Prerequisites
 
@@ -137,6 +138,7 @@ nomad-pack run jellyfin --registry=mediaserver
 - Unmanic: http://your-server:8888
 - FileFlows: http://your-server:5000
 - Tracearr: http://your-server:3005
+- Questarr: http://your-server:5050
 
 ## Volume Requirements
 
@@ -167,6 +169,7 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Unmanic | `unmanic-config` | Configuration and database |
 | FileFlows | `fileflows-config` | Configuration and database |
 | Tracearr | `tracearr-config`, `tracearr-postgres`, `tracearr-redis` | Image cache, TimescaleDB data, Redis data |
+| Questarr | `questarr-config` | SQLite database, config, and encryption keys |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -482,6 +485,14 @@ nomad alloc logs -job doplarr
 | `redis_port` | Redis port (bound to 127.0.0.1) | `6381` |
 | `secrets_variable_path` | Nomad variable holding `jwt_secret`, `cookie_secret`, `db_password` | `nomad/jobs/tracearr/tracearr` |
 
+### Questarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `questarr_uid` | UID for Questarr process (PUID) | `1002` |
+| `questarr_gid` | GID for Questarr process (PGID) | `1001` |
+| `port` | Questarr web interface port | `5050` |
+
 ### Backup/Update Variables
 
 | Variable | Description | Default |
@@ -674,6 +685,15 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `tracearr-update` | batch/periodic | Daily version check (if enabled) |
 | `tracearr-restore` | batch/parameterized | On-demand restore (if enabled) |
 
+### Questarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `questarr` | service | Main Questarr service |
+| `questarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `questarr-update` | batch/periodic | Daily version check (if enabled) |
+| `questarr-restore` | batch/parameterized | On-demand restore (if enabled) |
+
 ### Homarr Pack
 
 | Job | Type | Description |
@@ -718,6 +738,7 @@ The update jobs detect the latest stable version by querying Docker Hub and filt
 | FileFlows | revenz/fileflows | `YY.MM` or `YY.MM.N` | `26.04` |
 | Tracearr | GitHub releases (connorgallopo/Tracearr) | `vX.X.X` | `v3.1.1` |
 | Homarr | GitHub releases (homarr-labs/homarr) | `X.X.X` | `1.0.0` |
+| Questarr | GitHub releases (Doezer/Questarr) | `vX.X.X` | `v1.5.0` |
 
 **Note:** Plex uses the official Plex API at `plex.tv` to get the latest version, not the linuxserver container image.
 
@@ -770,6 +791,7 @@ nomad-pack run radarr --registry=mediaserver -var enable_update=false
 - **FileFlows**: `FileFlows.db`, `fileflows.config`, `Flows/*`, `Libraries/*`, `Plugins/*`, `Scripts/*`
 - **Tracearr**: `tracearr.dump` (`pg_dump` custom-format dump of the TimescaleDB database)
 - **Homarr**: Full `appdata/` directory
+- **Questarr**: Full `data/` directory (SQLite database, config, encryption keys)
 
 Backups are stored in the backup CSI volume at `/{service}/YYYY-MM-DD/`.
 
@@ -821,7 +843,7 @@ nomad-pack run radarr --registry=mediaserver \
 **Available restore jobs:**
 - `plex-restore`, `jellyfin-restore`
 - `radarr-restore`, `sonarr-restore`, `lidarr-restore`, `prowlarr-restore`
-- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`, `fileflows-restore`, `tracearr-restore`
+- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`, `fileflows-restore`, `tracearr-restore`, `questarr-restore`
 
 See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for the Ansible playbooks that handle this workflow automatically.
 
@@ -1051,6 +1073,7 @@ nomad-pack destroy sabnzbd --registry=mediaserver
 nomad-pack destroy unmanic --registry=mediaserver
 nomad-pack destroy fileflows --registry=mediaserver
 nomad-pack destroy tracearr --registry=mediaserver
+nomad-pack destroy questarr --registry=mediaserver
 ```
 
 ## Troubleshooting
