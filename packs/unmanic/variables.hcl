@@ -89,9 +89,9 @@ variable "media_volume_name" {
 }
 
 variable "cache_path" {
-  description = "Host path for Unmanic's temporary encoding cache (/tmp/unmanic)"
+  description = "Host path for Unmanic's temporary encoding cache"
   type        = string
-  default     = "/tmp/unmanic"
+  default     = "/var/cache/unmanic"
 }
 
 # Backup job configuration
