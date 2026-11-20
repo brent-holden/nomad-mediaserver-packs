@@ -28,28 +28,34 @@ variable "image" {
   default     = "docker.io/revenz/fileflows:26.10"
 }
 
-variable "force_pull" {
-  description = "Always pull the image on task start (leave false so restarts never silently upgrade a pinned tag)"
+variable "gpu_transcoding" {
+  description = "Enable GPU passthrough for hardware transcoding (Intel B580 on /dev/dri/card1)"
   type        = bool
-  default     = false
+  default     = true
+}
+
+variable "gpu_devices" {
+  description = "List of GPU device mappings to pass through (host:container format)"
+  type        = list(string)
+  default     = ["/dev/dri/card1:/dev/dri/card1", "/dev/dri/renderD129:/dev/dri/renderD129"]
+}
+
+variable "fileflows_uid" {
+  description = "The UID for the FileFlows user inside the container (PUID)"
+  type        = number
+  default     = 1002
+}
+
+variable "fileflows_gid" {
+  description = "The GID for the FileFlows group inside the container (PGID)"
+  type        = number
+  default     = 1001
 }
 
 variable "timezone" {
   description = "The timezone for the FileFlows container"
   type        = string
   default     = "America/New_York"
-}
-
-variable "fileflows_uid" {
-  description = "The UID for the FileFlows user inside the container"
-  type        = number
-  default     = 1002
-}
-
-variable "fileflows_gid" {
-  description = "The GID for the FileFlows group inside the container"
-  type        = number
-  default     = 1001
 }
 
 variable "cpu" {
@@ -70,10 +76,10 @@ variable "port" {
   default     = 5000
 }
 
-variable "gpu_devices" {
-  description = "List of GPU device mappings to pass through (host:container format, for QuickSync via oneVPL)"
-  type        = list(string)
-  default     = ["/dev/dri/card1:/dev/dri/card1", "/dev/dri/renderD129:/dev/dri/renderD129"]
+variable "config_volume_name" {
+  description = "The name of the host volume for FileFlows configuration"
+  type        = string
+  default     = "fileflows-config"
 }
 
 variable "media_volume_name" {
@@ -82,33 +88,15 @@ variable "media_volume_name" {
   default     = "media-drive"
 }
 
-variable "config_volume_name" {
-  description = "The name of the host volume for FileFlows configuration"
+variable "temp_path" {
+  description = "Host path for FileFlows temporary processing cache"
   type        = string
-  default     = "fileflows-config"
-}
-
-variable "node_hostnames" {
-  description = "Hostnames allowed for placement (must have the config host volume and GPU devices)"
-  type        = list(string)
-  default     = ["polaris.lan.eventide.network"]
-}
-
-variable "register_consul_service" {
-  description = "Register the FileFlows service with Consul and run HTTP health checks"
-  type        = bool
-  default     = true
-}
-
-variable "consul_service_name" {
-  description = "The name to register with Consul"
-  type        = string
-  default     = "fileflows"
+  default     = "/var/cache/fileflows"
 }
 
 # Backup job configuration
 variable "enable_backup" {
-  description = "Enable periodic backup job for FileFlows data"
+  description = "Enable periodic backup job for FileFlows configuration"
   type        = bool
   default     = true
 }
@@ -131,9 +119,16 @@ variable "backup_retention_days" {
   default     = 14
 }
 
+# Restore job configuration
+variable "enable_restore" {
+  description = "Enable parameterized restore job for FileFlows configuration"
+  type        = bool
+  default     = false
+}
+
 # Update job configuration
 variable "enable_update" {
-  description = "Enable periodic job to track the latest FileFlows version"
+  description = "Enable periodic job to fetch latest FileFlows version"
   type        = bool
   default     = true
 }
@@ -150,6 +145,31 @@ variable "nomad_variable_path" {
   default     = "nomad/jobs/fileflows"
 }
 
+variable "register_consul_service" {
+  description = "Register the FileFlows service with Consul"
+  type        = bool
+  default     = true
+}
+
+variable "consul_service_name" {
+  description = "The name to register with Consul"
+  type        = string
+  default     = "fileflows"
+}
+
+variable "force_pull" {
+  description = "Always pull the image on task start (leave false so restarts never silently upgrade a pinned tag)"
+  type        = bool
+  default     = false
+}
+
+variable "node_hostnames" {
+  description = "Hostnames allowed for placement (must have the config host volume and GPU devices)"
+  type        = list(string)
+  default     = ["polaris.lan.eventide.network"]
+}
+
+# Update job behavior
 variable "auto_apply_update" {
   description = "Automatically re-submit the fileflows job with the newest image tag when one is found. If false, the new version is only recorded in the Nomad variable (apply it manually by re-deploying the pack with the new image tag)."
   type        = bool

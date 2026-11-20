@@ -28,7 +28,9 @@ Each pack includes:
 | `sabnzbd` | SABnzbd - Usenet download client | 8080 |
 | `unmanic` | Unmanic - Library optimizer for automatic media transcoding | 8888 |
 | `doplarr` | Doplarr - Discord/Slack bot for requesting media through *arr backends | 3000 (Slack) |
-| `fileflows` | FileFlows - Video file processing pipeline (ffmpeg flows, AV1/HEVC optimization) with health monitoring | 5000 |
+| `fileflows` | FileFlows - Automated file processing with visual workflow pipelines, pinned image + health monitoring | 5000 |
+| `tracearr` | Tracearr - Plex/Jellyfin/Emby monitoring with account sharing detection | 3005 |
+| `questarr` | Questarr - Game library manager with discovery, tracking, and automated downloads | 5050 |
 
 ## Prerequisites
 
@@ -134,6 +136,9 @@ nomad-pack run jellyfin --registry=mediaserver
 - Tautulli: http://your-server:8181
 - SABnzbd: http://your-server:8080
 - Unmanic: http://your-server:8888
+- FileFlows: http://your-server:5000
+- Tracearr: http://your-server:3005
+- Questarr: http://your-server:5050
 
 ## Volume Requirements
 
@@ -162,6 +167,9 @@ The `deploy-media-server.yml` playbook in [nomad-mediaserver-infra](https://gith
 | Tautulli | `tautulli-config` | Configuration and database |
 | SABnzbd | `sabnzbd-config` | Configuration and database |
 | Unmanic | `unmanic-config` | Configuration and database |
+| FileFlows | `fileflows-config` | Configuration and database |
+| Tracearr | `tracearr-config`, `tracearr-postgres`, `tracearr-redis` | Image cache, TimescaleDB data, Redis data |
+| Questarr | `questarr-config` | SQLite database, config, and encryption keys |
 
 **Important:** Host volumes must be created with `single-node-multi-writer` access mode to allow backup and restore jobs to access the volume while the main service is running. The job templates specify this access mode explicitly.
 
@@ -458,6 +466,33 @@ nomad job status doplarr
 nomad alloc logs -job doplarr
 ```
 
+### FileFlows-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `fileflows_uid` | UID for FileFlows process (PUID) | `1002` |
+| `fileflows_gid` | GID for FileFlows process (PGID) | `1001` |
+| `port` | FileFlows web interface port | `5000` |
+| `temp_path` | Host path for processing cache (`/tmp/fileflows`) | `/tmp/fileflows` |
+
+### Tracearr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `port` | Tracearr web interface port | `3005` |
+| `postgres_image` | TimescaleDB image (pinned) | `timescale/timescaledb-ha:pg18.4-ts2.29.1` |
+| `postgres_port` | TimescaleDB port (bound to 127.0.0.1) | `5434` |
+| `redis_port` | Redis port (bound to 127.0.0.1) | `6381` |
+| `secrets_variable_path` | Nomad variable holding `jwt_secret`, `cookie_secret`, `db_password` | `nomad/jobs/tracearr/tracearr` |
+
+### Questarr-Specific Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `questarr_uid` | UID for Questarr process (PUID) | `1002` |
+| `questarr_gid` | GID for Questarr process (PGID) | `1001` |
+| `port` | Questarr web interface port | `5050` |
+
 ### Backup/Update Variables
 
 | Variable | Description | Default |
@@ -632,6 +667,33 @@ Each pack creates multiple Nomad jobs following the naming convention `{service}
 | `unmanic-update` | batch/periodic | Daily version check (if enabled) |
 | `unmanic-restore` | batch/parameterized | On-demand restore (if enabled) |
 
+### FileFlows Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `fileflows` | service | Main FileFlows service |
+| `fileflows-backup` | batch/periodic | Daily backup (if enabled) |
+| `fileflows-update` | batch/periodic | Daily version check (if enabled) |
+| `fileflows-restore` | batch/parameterized | On-demand restore (if enabled) |
+
+### Tracearr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `tracearr` | service | Tracearr with TimescaleDB and Redis sidecars |
+| `tracearr-backup` | batch/periodic | Daily `pg_dump` backup (if enabled) |
+| `tracearr-update` | batch/periodic | Daily version check (if enabled) |
+| `tracearr-restore` | batch/parameterized | On-demand restore (if enabled) |
+
+### Questarr Pack
+
+| Job | Type | Description |
+|-----|------|-------------|
+| `questarr` | service | Main Questarr service |
+| `questarr-backup` | batch/periodic | Daily backup (if enabled) |
+| `questarr-update` | batch/periodic | Daily version check (if enabled) |
+| `questarr-restore` | batch/parameterized | On-demand restore (if enabled) |
+
 ### Homarr Pack
 
 | Job | Type | Description |
@@ -673,7 +735,10 @@ The update jobs detect the latest stable version by querying Docker Hub and filt
 | Tautulli | linuxserver/tautulli | `X.X.X` | `2.15.0` |
 | SABnzbd | linuxserver/sabnzbd | `X.X.X` | `4.4.1` |
 | Unmanic | josh5/unmanic | `X.X.X` | `0.2.6` |
+| FileFlows | revenz/fileflows | `YY.MM` or `YY.MM.N` | `26.04` |
+| Tracearr | GitHub releases (connorgallopo/Tracearr) | `vX.X.X` | `v3.1.1` |
 | Homarr | GitHub releases (homarr-labs/homarr) | `X.X.X` | `1.0.0` |
+| Questarr | GitHub releases (Doezer/Questarr) | `vX.X.X` | `v1.5.0` |
 
 **Note:** Plex uses the official Plex API at `plex.tv` to get the latest version, not the linuxserver container image.
 
@@ -723,7 +788,10 @@ nomad-pack run radarr --registry=mediaserver -var enable_update=false
 - **Tautulli**: `tautulli.db`, `config.ini`, `backups/*`
 - **SABnzbd**: `sabnzbd.ini`, `sabnzbd.db`, `admin/*`
 - **Unmanic**: `unmanic.db`, `settings.json`, `plugins/*`
+- **FileFlows**: `FileFlows.db`, `fileflows.config`, `Flows/*`, `Libraries/*`, `Plugins/*`, `Scripts/*`
+- **Tracearr**: `tracearr.dump` (`pg_dump` custom-format dump of the TimescaleDB database)
 - **Homarr**: Full `appdata/` directory
+- **Questarr**: Full `data/` directory (SQLite database, config, encryption keys)
 
 Backups are stored in the backup CSI volume at `/{service}/YYYY-MM-DD/`.
 
@@ -775,7 +843,7 @@ nomad-pack run radarr --registry=mediaserver \
 **Available restore jobs:**
 - `plex-restore`, `jellyfin-restore`
 - `radarr-restore`, `sonarr-restore`, `lidarr-restore`, `prowlarr-restore`
-- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`
+- `seerr-restore`, `tautulli-restore`, `sabnzbd-restore`, `unmanic-restore`, `fileflows-restore`, `tracearr-restore`, `questarr-restore`
 
 See [nomad-mediaserver-infra](https://github.com/brent-holden/nomad-mediaserver-infra) for the Ansible playbooks that handle this workflow automatically.
 
@@ -794,7 +862,7 @@ The claim token is only needed for initial setup. After Plex is claimed, it pers
 
 ### GPU Configuration
 
-GPU-enabled packs (Plex, Jellyfin, Unmanic) support configurable device passthrough via the `gpu_devices` variable. This is important when a system has multiple GPUs and you want to assign specific GPUs to specific services.
+GPU-enabled packs (Plex, Jellyfin, Unmanic, FileFlows) support configurable device passthrough via the `gpu_devices` variable. This is important when a system has multiple GPUs and you want to assign specific GPUs to specific services.
 
 Each pack has different defaults based on the intended GPU assignment:
 
@@ -803,6 +871,7 @@ Each pack has different defaults based on the intended GPU assignment:
 | `plex` | `igpu`, `igpu-render`, `arc-b580`, `arc-b580-render` | Both GPUs (via udev symlinks) |
 | `jellyfin` | `/dev/dri` (all) | All available GPUs |
 | `unmanic` | `arc-b580`, `arc-b580-render` | Intel Arc B580 (via udev symlinks) |
+| `fileflows` | `card1`, `renderD129` | Intel Arc B580 (Xe) |
 
 To override the default GPU assignment:
 
@@ -895,7 +964,7 @@ The *arr apps (Radarr, Sonarr, Lidarr, Prowlarr) work together with SABnzbd as a
 5. **Lidarr** - Music management (connect to Prowlarr + SABnzbd)
 6. **Seerr** - Request management (connect to Plex/Jellyfin/Emby + Radarr/Sonarr)
 7. **Homarr** - Dashboard (add links to all services)
-8. **Tautulli** - Plex monitoring (connect to Plex)
+8. **Tracearr** (recommended) *or* **Tautulli** - Playback monitoring. Tracearr covers Plex, Jellyfin, and Emby and can import Tautulli history; Tautulli is Plex-only
 
 ### Service Connections
 
@@ -910,6 +979,7 @@ After deployment, configure the services to communicate:
 | Lidarr | Prowlarr, SABnzbd | Settings → Indexers, Settings → Download Clients |
 | Seerr | Plex/Jellyfin/Emby, Radarr, Sonarr | Settings → Media Server, Settings → Services |
 | Tautulli | Plex | Settings → Plex Media Server |
+| Tracearr | Plex/Jellyfin/Emby | First-run setup wizard, then Settings |
 
 ### Media Path Configuration
 
@@ -961,8 +1031,9 @@ nomad-pack run lidarr --registry=mediaserver
 # Deploy download client
 nomad-pack run sabnzbd --registry=mediaserver
 
-# Deploy media optimizer
+# Deploy media optimizer/processing
 nomad-pack run unmanic --registry=mediaserver
+nomad-pack run fileflows --registry=mediaserver
 
 # Deploy dashboard
 nomad-pack run homarr --registry=mediaserver \
@@ -970,7 +1041,12 @@ nomad-pack run homarr --registry=mediaserver \
 
 # Deploy request management and monitoring
 nomad-pack run seerr --registry=mediaserver
-nomad-pack run tautulli --registry=mediaserver
+nomad var put nomad/jobs/tracearr/tracearr \
+  jwt_secret="$(openssl rand -hex 32)" \
+  cookie_secret="$(openssl rand -hex 32)" \
+  db_password="$(openssl rand -hex 24)"
+nomad-pack run tracearr --registry=mediaserver
+# or, for Plex-only monitoring: nomad-pack run tautulli --registry=mediaserver
 
 # Optional: Deploy HTTPS reverse proxy for Seerr (dns_name is required)
 nomad-pack run seerr-reverse-proxy --registry=mediaserver \
@@ -995,6 +1071,9 @@ nomad-pack destroy homarr --registry=mediaserver
 nomad-pack destroy tautulli --registry=mediaserver
 nomad-pack destroy sabnzbd --registry=mediaserver
 nomad-pack destroy unmanic --registry=mediaserver
+nomad-pack destroy fileflows --registry=mediaserver
+nomad-pack destroy tracearr --registry=mediaserver
+nomad-pack destroy questarr --registry=mediaserver
 ```
 
 ## Troubleshooting

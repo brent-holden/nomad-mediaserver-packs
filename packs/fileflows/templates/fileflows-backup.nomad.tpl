@@ -26,12 +26,38 @@ job "[[ var "job_name" . ]]-backup" {
       unlimited = false
     }
 
+    volume "fileflows-config" {
+      type            = "host"
+      source          = "[[ var "config_volume_name" . ]]"
+      access_mode     = "single-node-multi-writer"
+      attachment_mode = "file-system"
+      read_only       = true
+    }
+
+    volume "backup-drive" {
+      type            = "csi"
+      source          = "[[ var "backup_volume_name" . ]]"
+      access_mode     = "multi-node-multi-writer"
+      attachment_mode = "file-system"
+    }
+
     task "backup" {
       driver = "podman"
 
       config {
         image = "docker.io/debian:bookworm-slim"
         args  = ["/bin/sh", "-c", "sleep 1 && /bin/sh /local/backup-fileflows.sh"]
+      }
+
+      volume_mount {
+        volume      = "fileflows-config"
+        destination = "/fileflows-config"
+        read_only   = true
+      }
+
+      volume_mount {
+        volume      = "backup-drive"
+        destination = "/backups"
       }
 
       template {
@@ -42,7 +68,7 @@ set -e
 echo "Starting FileFlows backup job..."
 
 echo "Installing sqlite3 and rsync..."
-apt-get update -qq && apt-get install -y -qq sqlite3 rsync >/dev/null 2>&1
+apt-get update -qq && apt-get install -y -qq sqlite3 rsync > /dev/null 2>&1
 
 # Current FileFlows data layout (config host volume is mounted at
 # /fileflows-config, which corresponds to /app/Data in the service container):
@@ -75,14 +101,12 @@ else
   exit 1
 fi
 
-for f in "$SERVER_CONFIG"; do
-  if [ -f "$f" ]; then
-    echo "Backing up $(basename "$f")..."
-    cp "$f" "$BACKUP_DEST/"
-  else
-    echo "Warning: $f not found, skipping"
-  fi
-done
+if [ -f "$SERVER_CONFIG" ]; then
+  echo "Backing up server.config..."
+  cp "$SERVER_CONFIG" "$BACKUP_DEST/"
+else
+  echo "Warning: $SERVER_CONFIG not found, skipping"
+fi
 
 for d in "$CONFIG_DIR" "$PLUGINS_DIR" "$TEMPLATES_DIR"; do
   if [ -d "$d" ]; then
@@ -93,47 +117,24 @@ for d in "$CONFIG_DIR" "$PLUGINS_DIR" "$TEMPLATES_DIR"; do
   fi
 done
 
-echo "Pruning backups older than [[ var "backup_retention_days" . ]] days..."
-find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ var "backup_retention_days" . ]] -exec rm -rf {} + 2>/dev/null || true
+# Clean up old backups (keep last N days)
+echo "Cleaning up old backups (keeping last [[ var "backup_retention_days" . ]] days)..."
+find "$BACKUP_DIR" -maxdepth 1 -type d -name "20*" -mtime +[[ var "backup_retention_days" . ]] -exec rm -rf {} \; 2>/dev/null || true
 
-echo "FileFlows backup complete: $BACKUP_DEST"
+# Show backup size
+echo "Backup complete. Size:"
+du -sh "$BACKUP_DEST"
+
+echo "Successfully backed up FileFlows to $BACKUP_DEST"
 EOF
         destination = "local/backup-fileflows.sh"
         perms       = "0755"
       }
 
-      volume_mount {
-        volume      = "config"
-        destination = "/fileflows-config"
-        read_only   = true
-      }
-
-      volume_mount {
-        volume      = "backups"
-        destination = "/backups"
-        read_only   = false
-      }
-
       resources {
-        cpu    = 200
-        memory = 256
+        cpu    = 500
+        memory = 512
       }
-    }
-
-    volume "config" {
-      type            = "host"
-      source          = "[[ var "config_volume_name" . ]]"
-      read_only       = true
-      attachment_mode = "file-system"
-      access_mode     = "single-node-multi-writer"
-    }
-
-    volume "backups" {
-      type            = "csi"
-      source          = "[[ var "backup_volume_name" . ]]"
-      read_only       = false
-      attachment_mode = "file-system"
-      access_mode     = "multi-node-multi-writer"
     }
   }
 }
