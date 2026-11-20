@@ -28,6 +28,7 @@ Each pack includes:
 | `sabnzbd` | SABnzbd - Usenet download client | 8080 |
 | `unmanic` | Unmanic - Library optimizer for automatic media transcoding | 8888 |
 | `doplarr` | Doplarr - Discord/Slack bot for requesting media through *arr backends | 3000 (Slack) |
+| `fileflows` | FileFlows - Video file processing pipeline (ffmpeg flows, AV1/HEVC optimization) with health monitoring | 5000 |
 
 ## Prerequisites
 
