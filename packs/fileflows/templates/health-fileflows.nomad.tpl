@@ -117,8 +117,22 @@ except Exception as e:
 
 # --- Check 2: FileFlows auto-disables libraries after repeated processing
 # failures. A disabled library means nothing in it will ever process.
+# Note: the volume is mounted read-write because SQLite cannot open a live
+# WAL-mode database on a read-only mount (it needs the -shm/-wal files).
+# The script only ever issues SELECTs.
 try:
-    con = sqlite3.connect("file:%s?mode=ro" % DB, uri=True, timeout=15)
+    con = None
+    for _ in range(3):
+        try:
+            con = sqlite3.connect(DB, timeout=15)
+            con.execute("SELECT 1")
+            break
+        except sqlite3.Error:
+            if con:
+                con.close()
+            con = None
+    if con is None:
+        raise sqlite3.Error("could not open database after retries")
     cur = con.cursor()
     for lib in EXPECTED_LIBS:
         cur.execute(
@@ -191,7 +205,7 @@ EOF
       volume_mount {
         volume      = "config"
         destination = "/fileflows-config"
-        read_only   = true
+        read_only   = false
       }
 
       resources {
@@ -203,7 +217,7 @@ EOF
     volume "config" {
       type            = "host"
       source          = "[[ var "config_volume_name" . ]]"
-      read_only       = true
+      read_only       = false
       attachment_mode = "file-system"
       access_mode     = "single-node-multi-writer"
     }
