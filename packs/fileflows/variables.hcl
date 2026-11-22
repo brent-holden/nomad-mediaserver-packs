@@ -65,9 +65,9 @@ variable "cpu" {
 }
 
 variable "memory" {
-  description = "The memory resources to allocate (MB)"
+  description = "The memory resources to allocate (MB). Two concurrent 4K VMAF-optimized AV1 encodes peak well over 4GB (OOM-killed at 4096 on 2026-11-21); 16GB covers worst-case pairs."
   type        = number
-  default     = 4096
+  default     = 16384
 }
 
 variable "port" {
