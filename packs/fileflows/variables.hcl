@@ -25,7 +25,7 @@ variable "namespace" {
 variable "image" {
   description = "The container image to use for FileFlows (pin to a numeric tag, e.g. 26.10 - never :latest, upgrades must be deliberate)"
   type        = string
-  default     = "docker.io/revenz/fileflows:26.10"
+  default     = "docker.io/revenz/fileflows:26.11"
 }
 
 variable "gpu_transcoding" {
