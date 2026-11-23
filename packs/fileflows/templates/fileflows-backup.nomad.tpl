@@ -26,12 +26,15 @@ job "[[ var "job_name" . ]]-backup" {
       unlimited = false
     }
 
+    # NOT read-only: SQLite needs write access to the -shm file to read a live
+    # WAL-mode database; a ro mount makes the snapshot fail with "unable to
+    # open database file" and silently produces a 0-byte backup.
     volume "fileflows-config" {
       type            = "host"
       source          = "[[ var "config_volume_name" . ]]"
       access_mode     = "single-node-multi-writer"
       attachment_mode = "file-system"
-      read_only       = true
+      read_only       = false
     }
 
     volume "backup-drive" {
@@ -52,7 +55,7 @@ job "[[ var "job_name" . ]]-backup" {
       volume_mount {
         volume      = "fileflows-config"
         destination = "/fileflows-config"
-        read_only   = true
+        read_only   = false
       }
 
       volume_mount {
