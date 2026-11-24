@@ -86,7 +86,7 @@ echo "Updated Nomad variable [[ var "nomad_variable_path" . ]]: version=$TAG pre
 AUTO_APPLY="[[ var "auto_apply_update" . ]]"
 if [ "$AUTO_APPLY" != "true" ]; then
   echo "auto_apply_update is false - NOT applying. To upgrade, redeploy the fileflows pack with:"
-  echo "  nomad pack deploy packs/fileflows fileflows -var image=docker.io/revenz/fileflows:$TAG"
+  echo "  nomad-pack run packs/fileflows --name=fileflows -var image=docker.io/revenz/fileflows:$TAG"
   echo "To roll back if an upgrade breaks: use previous_version from the Nomad variable."
   exit 0
 fi

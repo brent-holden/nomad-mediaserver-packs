@@ -4,6 +4,11 @@ This pack deploys [FileFlows](https://fileflows.com) to Nomad, with optional bac
 
 ## Prerequisites
 
+- **`media-drive` volume with `cache=none`** in its mount flags — the elrepo mainline
+  kernel's CIFS page-cache writeback is broken (buffered writes >300MB fail with EFAULT
+  and destroy files being replaced); direct writes bypass it. See
+  `examples/media-drive-volume.hcl`.
+
 1. **Nomad Variables** - Set the FileFlows version:
    ```bash
    nomad var put nomad/jobs/fileflows version="latest"
@@ -64,7 +69,7 @@ This pack creates up to 4 Nomad jobs:
 | `fileflows_gid` | GID for FileFlows group | `1001` |
 | `timezone` | Container timezone | `America/New_York` |
 | `cpu` | CPU allocation (MHz) | `4000` |
-| `memory` | Memory allocation (MB) | `4096` |
+| `memory` | Memory allocation (MB) | `16384` (two concurrent 4K VMAF encodes peak past 4GB) |
 | `port` | FileFlows web UI port | `5000` |
 | `media_volume_name` | CSI volume name | `media-drive` |
 | `config_volume_name` | Config host volume | `fileflows-config` |
@@ -109,7 +114,7 @@ The Consul health check includes a `check_restart` policy: if the web UI fails 5
 
 ## Image Pinning — important
 
-The service job runs a **pinned numeric image tag** (default `26.10`) with `force_pull = false`.
+The service job runs a **pinned numeric image tag** (default `26.11`) with `force_pull = false`.
 Never switch this to `:latest`: every restart would then silently upgrade FileFlows, and each
 upgrade re-runs every enabled DockerMod install script — one failed mod (e.g. a package removed
 from Ubuntu repos) blocks **all** file processing while the Nomad job stays green.
@@ -139,7 +144,7 @@ processes — for as long as the Nomad job looks perfectly healthy. It also auto
 libraries after repeated failures. This happened in Nov 2026 (comskip + Neofetch mods) and
 silently killed processing for months.
 
-`fileflows-health` (every 4h by default) detects all three signatures:
+`fileflows-health` (default schedule `0 3,7,11,15,19,23 * * *` — every 4h, staggered off the 2am backup / 3am update window) detects all three signatures:
 
 1. `DockerMod '...' not installed` rejections in the live allocation logs (after the agent's
    last registration — a short burst during startup is normal)
