@@ -184,9 +184,9 @@ variable "enable_health" {
 }
 
 variable "health_cron_schedule" {
-  description = "Cron schedule for the health job"
+  description = "Cron schedule for the health job. Staggered every 4h starting at 3am (3,7,11,15,19,23) so overnight checks don't cluster with the 2am backup and 3am update jobs during the storage-maintenance window."
   type        = string
-  default     = "0 */4 * * *"
+  default     = "0 3,7,11,15,19,23 * * *"
 }
 
 variable "health_expected_libraries" {
